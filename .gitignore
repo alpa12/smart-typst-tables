@@ -1,0 +1,9 @@
+*.knit.md
+*.typ
+*.pdf
+.quarto/
+.luarc.json
+*_files/
+
+
+/.luarc.json
