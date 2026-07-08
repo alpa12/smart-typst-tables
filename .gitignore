@@ -1,5 +1,6 @@
 *.knit.md
 *.typ
+!_extensions/smart-typst-tables/smart-typst-tables.typ
 *.pdf
 *.html
 .DS_Store
