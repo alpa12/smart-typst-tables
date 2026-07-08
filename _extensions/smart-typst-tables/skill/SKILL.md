@@ -118,6 +118,7 @@ Supported table attributes:
 - `smart-tables-stripe="true|false"`.
 - `smart-tables-row-rules="true|false"`.
 - `smart-tables-repeat-header="true|false"`.
+- `smart-tables-max-header-lines="2"`.
 - `smart-tables-optimize-widths="true|false"`.
 - `smart-tables-width="natural|full"`.
 - `smart-tables-align="left|center|right|none"`.
@@ -126,15 +127,15 @@ For a captioned and cross-referenceable table, wrap the table in a Div with an
 identifier and place the caption text after the table:
 
 ```markdown
-::: {#tbl-transactions}
-| Segment | Polices | Prime moyenne |
+::: {#tbl-project-schedule}
+| Workstream | Planned hours | Status |
 |---|---:|---:|
-| Nouvelles ventes | 128 | 1 240 $ |
+| Discovery | 80 | Complete |
 
-Transactions d'assurance.
+Project schedule summary.
 :::
 
-See @tbl-transactions.
+See @tbl-project-schedule.
 ```
 
 ## Widths and Alignment

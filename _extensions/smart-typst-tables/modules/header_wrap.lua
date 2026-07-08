@@ -88,4 +88,12 @@ function M.wrap(text, max_lines)
   return best or { text }
 end
 
+function M.fit(text, max_lines, width)
+  text = tostring(text or "")
+  if width and metrics.visual_width(text) <= width then
+    return { text }
+  end
+  return M.wrap(text, max_lines)
+end
+
 return M

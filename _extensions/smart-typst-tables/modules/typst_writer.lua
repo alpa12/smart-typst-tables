@@ -65,14 +65,14 @@ function M.render(model, plan, options)
   for col = 1, model.n_cols do
     local escaped_lines = {}
     for _, line in ipairs(plan.header_lines[col]) do
-      local escaped_line = escape(line):gsub(" ", "~")
+      local escaped_line = escape(line):gsub(" ", "~"):gsub("%-", "‑")
       table.insert(escaped_lines, escaped_line)
     end
     local header = table.concat(escaped_lines, "#linebreak()")
     local comma = col == model.n_cols and "" or ","
     table.insert(items, string.format(
       "  table.cell(align: %s, fill: %s.header-fill)[#strong[%s]]%s",
-      align(plan.col_align[col]),
+      align((plan.header_align and plan.header_align[col]) or plan.col_align[col]),
       p,
       header,
       comma

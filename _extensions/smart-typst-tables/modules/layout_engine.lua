@@ -25,16 +25,20 @@ local function type_width(kind, header_lines, values, n_cols)
   end
   local med = metrics.median(value_widths)
   local maxv = metrics.max(value_widths)
-  local need = math.max(line_width * 0.8, med * 0.65, math.min(maxv, 42) * 0.25, unbreakable * 0.7)
+  local header_need = line_width + 0.35
+  local need = math.max(header_need, med * 0.65, math.min(maxv, 42) * 0.25, unbreakable * 0.7)
 
   if kind == "date" then
-    return "fixed", math.max(5.7, math.min(6.6, need + 0.2))
+    return "fixed", math.max(5.7, math.min(math.max(6.6, header_need), need + 0.2))
+  end
+  if kind == "duration" then
+    return "fixed", math.max(4.6, math.min(math.max(6.2, header_need), need + 0.2))
   end
   if kind == "currency" then
-    return "fixed", math.max(4.7, math.min(5.9, need + 0.2))
+    return "fixed", math.max(4.7, math.min(math.max(6.4, header_need), need + 0.2))
   end
   if kind == "percentage" or kind == "numeric" then
-    return "fixed", math.max(4.0, math.min(5.5, need + 0.2))
+    return "fixed", math.max(4.0, math.min(math.max(6.4, header_need), need + 0.2))
   end
   if kind == "identifier" or kind == "boolean" then
     return "auto", 0
@@ -68,10 +72,27 @@ local function alignment(kind, source)
   if kind == "currency" or kind == "percentage" or kind == "numeric" then
     return "right"
   end
-  if kind == "date" then
+  if kind == "date" or kind == "duration" then
     return "center"
   end
   return "left"
+end
+
+local function header_alignment(column_align, kind)
+  if column_align == "right" or column_align == "center" then
+    return "center"
+  end
+  if kind == "date" or kind == "duration" or kind == "numeric" or kind == "currency" or kind == "percentage" then
+    return "center"
+  end
+  return "left"
+end
+
+local function numeric_width(column)
+  if type(column) == "string" then
+    return tonumber(column:match("^(%d+%.?%d*)em$"))
+  end
+  return nil
 end
 
 function M.plan(model, options)
@@ -82,6 +103,7 @@ function M.plan(model, options)
   local headers = table_ast.header_texts(model)
   local columns = {}
   local aligns = {}
+  local header_aligns = {}
   local header_lines = {}
   local types = {}
   local fixed_total = 0
@@ -94,8 +116,8 @@ function M.plan(model, options)
     local width_kind, width_value = type_width(inferred.type, lines, values, model.n_cols)
 
     types[col] = inferred
-    header_lines[col] = lines
     aligns[col] = alignment(inferred.type, model.colspecs[col] and model.colspecs[col].align)
+    header_aligns[col] = header_alignment(aligns[col], inferred.type)
 
     if options.table_width == "full" and (inferred.type == "free_text" or inferred.type == "mixed") then
       columns[col] = math.max(1.3, math.min(4, width_value / 6))
@@ -109,6 +131,10 @@ function M.plan(model, options)
       columns[col] = width_value
       fr_min = math.min(fr_min, width_value)
     end
+  end
+
+  for col = 1, model.n_cols do
+    header_lines[col] = header_wrap.fit(headers[col], options.max_header_lines, numeric_width(columns[col]))
   end
 
   local has_fr = false
@@ -126,6 +152,7 @@ function M.plan(model, options)
   return {
     columns = columns,
     col_align = aligns,
+    header_align = header_aligns,
     header_lines = header_lines,
     types = types,
     profile = options.profile,

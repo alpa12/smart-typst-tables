@@ -41,10 +41,10 @@ normalization, which is important for captions and references.
 Then write ordinary tables:
 
 ```markdown
-| Segment | Polices | Prime moyenne | Ratio de conversion |
+| Team | Open tasks | Monthly cost | On-time rate |
 |---|---:|---:|---:|
-| Nouvelles ventes | 128 | 1 240 $ | 42.5% |
-| Renouvellements | 94 | 980 $ | 71.0% |
+| Platform | 42 | 1 240 $ | 91.0% |
+| Design | 18 | 980 $ | 94.2% |
 ```
 
 ## Configuration
@@ -104,6 +104,7 @@ Use table-level attributes for local overrides:
 | `smart-tables-stripe="true"` | `true`, `false` | Overrides `stripe` for this table. |
 | `smart-tables-row-rules="false"` | `true`, `false` | Overrides `row-rules` for this table. |
 | `smart-tables-repeat-header="false"` | `true`, `false` | Overrides `repeat-header` for this table. |
+| `smart-tables-max-header-lines="2"` | Positive integer | Overrides `max-header-lines` for this table. |
 | `smart-tables-optimize-widths="false"` | `true`, `false` | Overrides `optimize-widths` for this table. |
 | `smart-tables-width="full"` | `natural`, `full` | Overrides `table-width` for this table. Use `full` when remaining width should be allocated to text-heavy columns. |
 | `smart-tables-align="left"` | `left`, `center`, `right`, `none` | Overrides whole-table alignment for this table. |

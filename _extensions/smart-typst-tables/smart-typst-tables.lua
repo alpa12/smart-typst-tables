@@ -36,13 +36,74 @@ local function include_helpers()
   end
 end
 
-local function table_filter(tbl)
+local function has_table_options(attr)
+  local attrs = (attr and attr.attributes) or {}
+  if attrs["smart-tables"] ~= nil then
+    return true
+  end
+  for key, _ in pairs(attrs) do
+    if key:match("^smart%-tables%-") then
+      return true
+    end
+  end
+  return false
+end
+
+local function copy_list(values)
+  local out = {}
+  for i, value in ipairs(values or {}) do
+    out[i] = value
+  end
+  return out
+end
+
+local function copy_attributes(values)
+  local out = {}
+  for key, value in pairs(values or {}) do
+    out[key] = value
+  end
+  return out
+end
+
+local function merge_attrs(table_attr, wrapper_attr)
+  if not wrapper_attr then
+    return table_attr
+  end
+
+  local id = table_attr and table_attr.identifier or ""
+  if id == "" then
+    id = wrapper_attr.identifier or ""
+  end
+
+  local classes = copy_list(wrapper_attr.classes)
+  for _, class in ipairs((table_attr and table_attr.classes) or {}) do
+    table.insert(classes, class)
+  end
+
+  local attrs = copy_attributes(wrapper_attr.attributes)
+  for key, value in pairs((table_attr and table_attr.attributes) or {}) do
+    attrs[key] = value
+  end
+
+  return pandoc.Attr(id, classes, attrs)
+end
+
+local function disable_table(tbl)
+  tbl.attr = tbl.attr or pandoc.Attr()
+  tbl.attr.attributes = tbl.attr.attributes or {}
+  tbl.attr.attributes["smart-tables"] = "false"
+end
+
+local function render_table(tbl, attr)
   if not is_typst() then
     return nil
   end
 
   local options = state.options or config.defaults()
   local model = table_ast.from_pandoc_table(tbl)
+  if attr then
+    model.attr = merge_attrs(model.attr, attr)
+  end
   local table_options = config.for_table(options, model.attr)
 
   if not table_options.enabled then
@@ -72,12 +133,36 @@ local function table_filter(tbl)
   return pandoc.RawBlock("typst", typst)
 end
 
+local function div_filter(div)
+  if not is_typst() or not has_table_options(div.attr) then
+    return nil
+  end
+  if #div.content ~= 1 or div.content[1].t ~= "Table" then
+    return nil
+  end
+
+  local rendered = render_table(div.content[1], div.attr)
+  if rendered then
+    return rendered
+  end
+
+  disable_table(div.content[1])
+  return div
+end
+
+local function table_filter(tbl)
+  return render_table(tbl)
+end
+
 function Pandoc(doc)
   if not is_typst() then
     return doc
   end
 
   state.options = config.from_meta(doc.meta)
+  doc = doc:walk({
+    Div = div_filter
+  })
   return doc:walk({
     Table = table_filter
   })

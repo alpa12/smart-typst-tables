@@ -36,6 +36,9 @@ function M.infer(header, values)
   if share(values, "^%d%d%d%d%-%d%d%-%d%d$") >= 0.75 or header_lc:match("date") then
     return { type = "date", confidence = 0.9 }
   end
+  if header_lc:match("duration") or share(values, "^%d+%s+[Dd]ays?$") + share(values, "^%d+%s+[Ww]eeks?$") + share(values, "^%d+%s+[Mm]onths?$") >= 0.65 then
+    return { type = "duration", confidence = 0.85 }
+  end
   if share(values, "^%-?[%d%s,%.]+%s?[$€£]$") >= 0.65 or header_lc:match("prime") or header_lc:match("amount") then
     return { type = "currency", confidence = 0.85 }
   end

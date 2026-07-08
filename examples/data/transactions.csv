@@ -1,7 +1,0 @@
-Police,Date d'effet de police,Date de transaction,Terme de police,Prime annuelle,Prime du terme,Type de transaction
-A,2024-01-01,2024-01-01,24 mois,1 000 $,2 000 $,Vente
-A,2024-01-01,2025-07-01,24 mois,-,-,Annulation
-B,2025-01-01,2025-01-01,12 mois,400 $,400 $,Vente
-B,2025-01-01,2025-10-01,12 mois,600 $,600 $,Modification en cours de terme
-C,2025-10-01,2025-10-01,6 mois,750 $,375 $,Vente
-

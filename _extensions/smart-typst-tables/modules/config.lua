@@ -65,6 +65,14 @@ local function text_size(value, default)
   return default
 end
 
+local function positive_integer(value, default)
+  value = tonumber(string_value(value, default))
+  if value == nil or value < 1 then
+    return default
+  end
+  return math.floor(value)
+end
+
 function M.defaults()
   return {
     enabled = true,
@@ -98,7 +106,7 @@ function M.from_meta(meta)
   out.row_rules = bool(cfg["row-rules"] or cfg.row_rules, out.row_rules)
   out.fallback = string_value(cfg.fallback, out.fallback)
   out.diagnostics = bool(cfg.diagnostics, out.diagnostics)
-  out.max_header_lines = tonumber(string_value(cfg["max-header-lines"] or cfg.max_header_lines, out.max_header_lines)) or out.max_header_lines
+  out.max_header_lines = positive_integer(cfg["max-header-lines"] or cfg.max_header_lines, out.max_header_lines)
   out.explicit_widths = string_value(cfg["explicit-widths"] or cfg.explicit_widths, out.explicit_widths)
   out.table_width = string_value(cfg["table-width"] or cfg.table_width, out.table_width)
   out.align = string_value(cfg.align, out.align)
@@ -130,6 +138,9 @@ function M.for_table(options, attr)
   end
   if attrs["smart-tables-repeat-header"] then
     out.repeat_header = bool(attrs["smart-tables-repeat-header"], out.repeat_header)
+  end
+  if attrs["smart-tables-max-header-lines"] then
+    out.max_header_lines = positive_integer(attrs["smart-tables-max-header-lines"], out.max_header_lines)
   end
   if attrs["smart-tables-optimize-widths"] then
     out.optimize_widths = bool(attrs["smart-tables-optimize-widths"], out.optimize_widths)
