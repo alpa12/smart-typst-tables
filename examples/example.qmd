@@ -1,164 +1,83 @@
 ---
-title: "Smart Typst Tables Example"
-format:
-  typst:
-    toc: false
-    papersize: us-letter
-    margin:
-      x: 0.75in
-      y: 0.8in
+title: "Smart Typst Tables"
+format: typst
 filters:
   - ../_extensions/smart-typst-tables/smart-typst-tables.lua
 execute:
   echo: false
-  warning: true
+smart-tables:
+  profile: academic
+  table-width: natural
+  align: center
+  stripe: true
 ---
 
-This document demonstrates several table shapes handled by
-`smart-typst-tables`: wide transaction data, compact tables, numeric summaries,
-long text, and explicit overrides when a course handout needs a specific layout.
+This example uses one extension configuration for all ordinary tables:
 
-```{r}
-#| label: setup
-source_path <- c(
-  "R/smart_table.R",
-  "../R/smart_table.R",
-  "_extensions/smart-typst-tables/smart_table.R",
-  "../_extensions/smart-typst-tables/smart_table.R"
-)
-source(source_path[file.exists(source_path)][1])
-
-transactions <- read.csv(
-  if (file.exists("examples/data/transactions.csv")) {
-    "examples/data/transactions.csv"
-  } else {
-    "data/transactions.csv"
-  },
-  check.names = FALSE
-)
+```yaml
+smart-tables:
+  profile: academic
+  table-width: natural
+  align: center
+  stripe: true
 ```
 
-## 1. Default academic table
+`table-width: natural` prevents short tables from filling the whole page. The
+table is then centered horizontally with `align: center`.
 
-The default profile computes compact fixed widths for identifiers, dates, and
-currency columns, then gives the remaining width to the descriptive text column.
+## Markdown table with caption and cross-reference
 
-```{r}
-#| output: asis
-transactions |>
-  smart_table(
-    caption = "Transactions d'assurance — profil académique",
-    profile = "academic",
-    width = "100%",
-    auto_widths = TRUE,
-    striped = TRUE
-  )
-```
+::: {#tbl-transactions}
 
-## 2. Compact table with notes
+| Police | Date d'effet de police | Date de transaction | Terme de police | Prime annuelle | Prime du terme | Type de transaction |
+|---|---|---|---|---:|---:|---|
+| A | 2024-01-01 | 2024-01-01 | 24 mois | 1 000 $ | 2 000 $ | Vente |
+| A | 2024-01-01 | 2025-07-01 | 24 mois | - | - | Annulation |
+| B | 2025-01-01 | 2025-01-01 | 12 mois | 400 $ | 400 $ | Vente |
+| B | 2025-01-01 | 2025-10-01 | 12 mois | 600 $ | 600 $ | Modification en cours de terme |
+| C | 2025-10-01 | 2025-10-01 | 6 mois | 750 $ | 375 $ | Vente |
 
-The compact profile is useful for dense course notes and appendices.
+Transactions d'assurance.
+:::
 
-```{r}
-#| output: asis
-transactions |>
-  smart_table(
-    caption = "Même table, profil compact",
-    profile = "compact",
-    width = "100%",
-    striped = TRUE,
-    notes = "Note : les tirets indiquent une prime non applicable à la transaction."
-  )
-```
+See @tbl-transactions.
 
-## 3. Numeric summary table
+## Numeric summary
 
-Numeric, percentage, and currency-like columns are right-aligned and kept narrow.
+Numeric, percentage, and currency-like columns are inferred and right-aligned.
+
+| Segment | Polices | Prime moyenne | Ratio de conversion | Commentaire pédagogique |
+|---|---:|---:|---:|---|
+| Nouvelles ventes | 128 | 1 240 $ | 42.5% | Fort volume mais prime moyenne élevée. |
+| Renouvellements | 94 | 980 $ | 71.0% | Portefeuille stable avec bonne rétention. |
+| Annulations | 17 | - | 8.2% | À surveiller dans les exercices de sensibilité. |
+| Modifications | 31 | 610 $ | 19.4% | Effet mixte sur la prime totale. |
+
+## Computational table
+
+Tables produced by code benefit when Quarto/Pandoc represents them as tables.
 
 ```{r}
 #| output: asis
-summary_table <- data.frame(
-  Segment = c("Nouvelles ventes", "Renouvellements", "Annulations", "Modifications"),
-  Polices = c(128, 94, 17, 31),
-  `Prime moyenne` = c("1 240 $", "980 $", "-", "610 $"),
-  `Ratio de conversion` = c("42.5%", "71.0%", "8.2%", "19.4%"),
-  `Commentaire pédagogique` = c(
-    "Fort volume mais prime moyenne élevée.",
-    "Portefeuille stable avec bonne rétention.",
-    "À surveiller dans les exercices de sensibilité.",
-    "Effet mixte sur la prime totale."
-  ),
-  check.names = FALSE
-)
-
-summary_table |>
-  smart_table(
-    caption = "Résumé numérique avec pourcentages",
-    profile = "teaching",
-    width = "100%",
-    striped = TRUE
-  )
+transactions <- read.csv("data/transactions.csv", check.names = FALSE)
+knitr::kable(transactions, caption = "Transactions générées par knitr::kable().")
 ```
 
-## 4. Long-text teaching table
+## Compact table-level override
 
-Long text columns absorb the available width. Short categorical and numeric
-columns stay compact.
+::: {smart-tables-profile="compact" smart-tables-stripe="false"}
+| Critère | Poids | Attente pour une réponse complète |
+|---|---:|---|
+| Définition | 20% | Définit clairement la prime annuelle, la prime du terme et la date de transaction. |
+| Calcul | 30% | Montre les étapes de calcul et indique les hypothèses utilisées. |
+| Interprétation | 35% | Explique pourquoi une annulation ou une modification change le revenu reconnu. |
+| Communication | 15% | Présente les résultats avec unités, dates et libellés cohérents. |
+:::
 
-```{r}
-#| output: asis
-rubric <- data.frame(
-  Critère = c("Définition", "Calcul", "Interprétation", "Communication"),
-  Poids = c("20%", "30%", "35%", "15%"),
-  `Attente pour une réponse complète` = c(
-    "Définit clairement la prime annuelle, la prime du terme et la date de transaction.",
-    "Montre les étapes de calcul et indique les hypothèses utilisées.",
-    "Explique pourquoi une annulation ou une modification change le revenu reconnu.",
-    "Présente les résultats avec unités, dates et libellés cohérents."
-  ),
-  check.names = FALSE
-)
+## Opt-out
 
-rubric |>
-  smart_table(
-    caption = "Grille d'évaluation courte",
-    profile = "spacious",
-    width = "100%",
-    striped = FALSE,
-    notes = "Exemple conçu pour des notes de cours imprimées."
-  )
-```
-
-## 5. Explicit overrides when needed
-
-The extension avoids manual tuning for common cases, but still allows explicit
-widths and preferred header breaks when a table has a known pedagogical layout.
-
-```{r}
-#| output: asis
-comparison <- data.frame(
-  Méthode = c("Typst auto", "Largeurs manuelles", "smart_table()"),
-  `Temps de préparation` = c("Faible", "Élevé", "Faible"),
-  `Qualité sur tables larges` = c("Variable", "Bonne", "Bonne par défaut"),
-  `Quand l'utiliser` = c(
-    "Petites tables simples.",
-    "Table finale très contrôlée.",
-    "Documents de cours avec plusieurs tableaux récurrents."
-  ),
-  check.names = FALSE
-)
-
-comparison |>
-  smart_table(
-    caption = "Comparaison des stratégies de mise en page",
-    profile = "academic",
-    auto_widths = FALSE,
-    col_widths = c("1.2fr", "1fr", "1.2fr", "2.6fr"),
-    header_breaks = list(
-      "Temps de préparation" = c("Temps de", "préparation"),
-      "Qualité sur tables larges" = c("Qualité sur", "tables larges"),
-      "Quand l'utiliser" = c("Quand", "l'utiliser")
-    ),
-    striped = TRUE
-  )
-```
+::: {smart-tables="false"}
+| A | B |
+|---|---|
+| This table | is left unchanged |
+:::

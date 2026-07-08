@@ -1,29 +1,75 @@
--- Inject Typst helper definitions for smart-typst-tables.
--- The R API emits raw Typst. This filter keeps reusable styling helpers in the
--- extension so documents do not need to import them manually.
-
-local function is_typst()
-  return FORMAT and FORMAT:match("typst")
-end
-
-local function filter_dir()
+local function script_dir()
   local source = debug.getinfo(1, "S").source
   if source:sub(1, 1) == "@" then
     source = source:sub(2)
   end
-  return source:match("^(.*[/\\])") or ""
+  return source:match("^(.*[/\\])") or "./"
 end
 
-local function read_typst_helpers()
-  local path = filter_dir() .. "smart-typst-tables.typ"
-  local file = io.open(path, "r")
-  if not file then
-    io.stderr:write("smart-typst-tables: could not read " .. path .. "\n")
-    return ""
+package.path = script_dir() .. "modules/?.lua;" .. package.path
+
+local config = require("config")
+local table_ast = require("table_ast")
+local layout_engine = require("layout_engine")
+local typst_writer = require("typst_writer")
+local diagnostics = require("diagnostics")
+
+local state = {
+  options = nil,
+  helper_injected = false,
+}
+
+local function is_typst()
+  if quarto and quarto.doc and quarto.doc.is_format then
+    return quarto.doc.is_format("typst")
   end
-  local content = file:read("*a")
-  file:close()
-  return content
+  return FORMAT == "typst" or (FORMAT and FORMAT:match("^typst"))
+end
+
+local function include_helpers()
+  if state.helper_injected then
+    return
+  end
+  state.helper_injected = true
+  if quarto and quarto.doc and quarto.doc.include_file then
+    quarto.doc.include_file("in-header", "smart-typst-tables.typ")
+  end
+end
+
+local function table_filter(tbl)
+  if not is_typst() then
+    return nil
+  end
+
+  local options = state.options or config.defaults()
+  local model = table_ast.from_pandoc_table(tbl)
+  local table_options = config.for_table(options, model.attr)
+
+  if not table_options.enabled then
+    diagnostics.debug(options, "table skipped: disabled by configuration")
+    return nil
+  end
+
+  local eligible, reason = table_ast.is_eligible(model, table_options)
+  if not eligible then
+    diagnostics.debug(options, "table skipped: " .. reason)
+    return nil
+  end
+
+  local plan, plan_reason = layout_engine.plan(model, table_options)
+  if not plan then
+    diagnostics.debug(options, "table skipped: " .. plan_reason)
+    return nil
+  end
+
+  local typst, writer_reason = typst_writer.render(model, plan, table_options)
+  if not typst then
+    diagnostics.debug(options, "table skipped: " .. writer_reason)
+    return nil
+  end
+
+  include_helpers()
+  return pandoc.RawBlock("typst", typst)
 end
 
 function Pandoc(doc)
@@ -31,12 +77,8 @@ function Pandoc(doc)
     return doc
   end
 
-  local helpers = read_typst_helpers()
-  if helpers == "" then
-    return doc
-  end
-
-  table.insert(doc.blocks, 1, pandoc.RawBlock("typst", helpers))
-  return doc
+  state.options = config.from_meta(doc.meta)
+  return doc:walk({
+    Table = table_filter
+  })
 end
-
