@@ -1,9 +1,17 @@
 *.knit.md
 *.typ
 *.pdf
+*.html
+.DS_Store
+.Rhistory
+.RData
+.Ruserdata
+.Rproj.user/
 .quarto/
 .luarc.json
 *_files/
-
+_freeze/
+site_libs/
+docs/
 
 /.luarc.json

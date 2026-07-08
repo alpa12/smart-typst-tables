@@ -1,0 +1,123 @@
+name: Deploy example
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+
+      - name: Install R packages
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          packages: |
+            any::knitr
+            any::rmarkdown
+
+      - name: Render example
+        run: |
+          mkdir -p _site
+          cd examples
+          quarto render example.qmd --to typst --output example.pdf --output-dir ../_site
+          cd ..
+          cat > _site/index.html <<'HTML'
+          <!doctype html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>Smart Typst Tables example</title>
+            <style>
+              html,
+              body {
+                height: 100%;
+                margin: 0;
+              }
+
+              body {
+                font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                background: #f6f7f9;
+                color: #111827;
+              }
+
+              header {
+                align-items: center;
+                background: #ffffff;
+                border-bottom: 1px solid #d9dee8;
+                display: flex;
+                gap: 1rem;
+                justify-content: space-between;
+                min-height: 3.5rem;
+                padding: 0 1rem;
+              }
+
+              h1 {
+                font-size: 1rem;
+                font-weight: 650;
+                margin: 0;
+              }
+
+              a {
+                color: #1455d9;
+                font-weight: 600;
+                text-decoration: none;
+              }
+
+              a:hover {
+                text-decoration: underline;
+              }
+
+              iframe {
+                border: 0;
+                display: block;
+                height: calc(100% - 3.5rem);
+                width: 100%;
+              }
+            </style>
+          </head>
+          <body>
+            <header>
+              <h1>Smart Typst Tables example</h1>
+              <a href="example.pdf">Open PDF</a>
+            </header>
+            <iframe src="example.pdf" title="Smart Typst Tables Typst example"></iframe>
+          </body>
+          </html>
+          HTML
+          touch _site/.nojekyll
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
