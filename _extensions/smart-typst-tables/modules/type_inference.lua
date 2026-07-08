@@ -51,7 +51,7 @@ function M.infer(header, values)
 
   local numeric = 0
   for _, value in ipairs(values) do
-    local normalized = value:gsub("[%s,$€£%%]", ""):gsub(",", ".")
+    local normalized = metrics.normalize_number_text(value):gsub("[$€£%%]", ""):gsub(",", ".")
     if tonumber(normalized) ~= nil then
       numeric = numeric + 1
     end

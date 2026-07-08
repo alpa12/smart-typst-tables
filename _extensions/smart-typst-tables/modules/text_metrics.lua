@@ -1,5 +1,7 @@
 local M = {}
 
+local NBSP = "\194\160"
+
 local function codepoints(text)
   text = text or ""
   local ok, out = pcall(function()
@@ -20,13 +22,34 @@ local function codepoints(text)
   return chars
 end
 
+local function is_ascii_space_byte(byte)
+  return byte == 9 or byte == 10 or byte == 11 or byte == 12 or byte == 13 or byte == 32
+end
+
+local function collapse_ascii_space(text)
+  local out = {}
+  local pending_space = false
+  for i = 1, #text do
+    local byte = text:byte(i)
+    if is_ascii_space_byte(byte) then
+      pending_space = true
+    else
+      if pending_space and #out > 0 then
+        table.insert(out, " ")
+      end
+      table.insert(out, string.char(byte))
+      pending_space = false
+    end
+  end
+  return table.concat(out)
+end
+
 function M.stringify_blocks(blocks)
   if blocks == nil then
     return ""
   end
   local text = pandoc.utils.stringify(blocks)
-  text = text:gsub("%s+", " "):gsub("^%s+", ""):gsub("%s+$", "")
-  return text
+  return collapse_ascii_space(text)
 end
 
 function M.len(text)
@@ -37,7 +60,7 @@ function M.visual_width(text)
   local width = 0
   for _, code in ipairs(codepoints(text)) do
     local ch = utf8.char(code)
-    if ch:match("[%s%.,;:!'’%-]") then
+    if code == 32 or ch == NBSP or ch:match("[%.,;:!'’%-]") then
       width = width + 0.35
     elseif ch:match("[%d]") then
       width = width + 0.55
@@ -78,10 +101,19 @@ end
 
 function M.unbreakable_width(text)
   local max_width = 0
-  for token in tostring(text or ""):gmatch("%S+") do
+  for token in tostring(text or ""):gmatch("[^ \t\r\n]+") do
     max_width = math.max(max_width, M.visual_width(token))
   end
   return max_width
+end
+
+function M.normalize_number_text(text)
+  return tostring(text or ""):gsub(NBSP, " "):gsub(" ", "")
+end
+
+function M.keep_digit_group_spaces(text)
+  text = tostring(text or ""):gsub(NBSP, " ")
+  return text:gsub("(%d) (%d)", "%1~%2")
 end
 
 return M

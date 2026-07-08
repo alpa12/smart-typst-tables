@@ -1,3 +1,5 @@
+local metrics = require("text_metrics")
+
 local M = {}
 
 local function escape(text)
@@ -55,6 +57,13 @@ local function text_size_arg(value)
   return ", text-size: " .. value
 end
 
+local function cell_text(text, kind)
+  if kind == "numeric" or kind == "currency" or kind == "percentage" then
+    return metrics.keep_digit_group_spaces(text)
+  end
+  return text
+end
+
 function M.render(model, plan, options)
   local p = "smart-table-profile(\"" .. escape(plan.profile) .. "\")"
   local scope_args = "profile: \"" .. escape(plan.profile) .. "\"" .. text_size_arg(plan.text_size)
@@ -93,7 +102,7 @@ function M.render(model, plan, options)
         "table.cell(align: %s%s)[%s]%s",
         align(plan.col_align[col]),
         fill,
-        escape(source and source.text or ""),
+        escape(cell_text(source and source.text or "", plan.types[col] and plan.types[col].type)),
         comma
       ))
     end
