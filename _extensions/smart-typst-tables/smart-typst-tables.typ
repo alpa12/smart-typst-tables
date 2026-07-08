@@ -61,6 +61,6 @@
 #let smart-table-scope(profile: "academic", text-size: none, body) = {
   let p = smart-table-profile(profile)
   set text(size: if text-size == none { p.font-size } else { text-size }, hyphenate: false)
-  set par(leading: p.leading)
+  set par(leading: p.leading, justify: false)
   body
 }
