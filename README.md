@@ -113,9 +113,9 @@ Use table-level attributes for local overrides:
 | Profile | Use case | Styling |
 |---|---|---|
 | `academic` | Default professional PDF tables. | Booktabs-like table with modest font size, light header fill, row rules, and moderate spacing. |
-| `compact` | Dense course notes, appendices, and space-constrained reports. | Smaller font, tighter insets, tighter leading, compact gutters, light header fill, and row rules. |
-| `exam` | Exams, assignments, and documents where readability matters more than density. | Slightly larger text and spacing, clear header fill, and visible rules. |
-| `plain` | Documents that need layout optimization with minimal decoration. | No header or stripe fill, minimal rules, and restrained spacing. |
+| `compact` | Dense course notes, appendices, and space-constrained reports. | Noticeably smaller text, tight insets, tight leading, compact gutters, darker header fill, and subtle row rules. |
+| `exam` | Exams, assignments, and documents where readability matters more than density. | Larger text, generous insets, stronger header fill, heavier header rule, and clearer row separation. |
+| `plain` | Documents that need layout optimization with minimal decoration. | No header or stripe fill, no body row rules, lighter header rule, and restrained spacing. |
 
 ## Examples
 

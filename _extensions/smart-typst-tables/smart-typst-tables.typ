@@ -3,39 +3,39 @@
 #let smart-table-profile(name) = {
   if name == "compact" {
     (
-      font-size: 8pt,
-      leading: 0.54em,
-      inset-x: 2.4pt,
-      inset-y: 1.8pt,
-      header-fill: luma(94%),
+      font-size: 7.4pt,
+      leading: 0.46em,
+      inset-x: 1.8pt,
+      inset-y: 1.1pt,
+      header-fill: luma(91%),
       stripe-fill: luma(98%),
-      header-stroke: 0.65pt + black,
-      row-stroke: 0.22pt + luma(84%),
-      gutter: 1.1pt,
+      header-stroke: 0.55pt + black,
+      row-stroke: 0.16pt + luma(88%),
+      gutter: 0.6pt,
     )
   } else if name == "exam" {
     (
-      font-size: 9pt,
-      leading: 0.6em,
-      inset-x: 3.6pt,
-      inset-y: 2.7pt,
-      header-fill: luma(96%),
-      stripe-fill: luma(99%),
-      header-stroke: 0.75pt + black,
-      row-stroke: 0.24pt + luma(86%),
-      gutter: 1.5pt,
+      font-size: 10pt,
+      leading: 0.72em,
+      inset-x: 5pt,
+      inset-y: 4pt,
+      header-fill: luma(90%),
+      stripe-fill: luma(96%),
+      header-stroke: 0.95pt + black,
+      row-stroke: 0.32pt + luma(78%),
+      gutter: 2.2pt,
     )
   } else if name == "plain" {
     (
-      font-size: 8.7pt,
-      leading: 0.56em,
-      inset-x: 3pt,
-      inset-y: 2.2pt,
+      font-size: 8.9pt,
+      leading: 0.62em,
+      inset-x: 2.4pt,
+      inset-y: 1.9pt,
       header-fill: none,
       stripe-fill: none,
-      header-stroke: 0.7pt + black,
+      header-stroke: 0.45pt + luma(35%),
       row-stroke: none,
-      gutter: 1.3pt,
+      gutter: 1.8pt,
     )
   } else {
     (
