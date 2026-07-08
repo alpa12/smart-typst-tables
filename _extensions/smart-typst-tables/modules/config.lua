@@ -43,10 +43,33 @@ local function string_value(value, default)
   return tostring(value)
 end
 
+local function text_size(value, default)
+  value = string_value(value, default)
+  if value == nil then
+    return default
+  end
+  value = tostring(value):gsub("^%s+", ""):gsub("%s+$", "")
+  if value == "" then
+    return default
+  end
+  if value:lower() == "auto" then
+    return "auto"
+  end
+  if value:match("^%d+%.?%d*$") then
+    return value .. "em"
+  end
+  local normalized = value:lower()
+  if normalized:match("^%d+%.?%d*%s*em$") or normalized:match("^%d+%.?%d*%s*pt$") then
+    return normalized:gsub("%s+", "")
+  end
+  return default
+end
+
 function M.defaults()
   return {
     enabled = true,
     profile = "academic",
+    text_size = "auto",
     optimize_widths = true,
     wrap_headers = "balanced",
     repeat_header = true,
@@ -67,6 +90,7 @@ function M.from_meta(meta)
 
   out.enabled = bool(cfg.enabled, out.enabled)
   out.profile = string_value(cfg.profile, out.profile)
+  out.text_size = text_size(cfg["text-size"] or cfg.text_size, out.text_size)
   out.optimize_widths = bool(cfg["optimize-widths"] or cfg.optimize_widths, out.optimize_widths)
   out.wrap_headers = string_value(cfg["wrap-headers"] or cfg.wrap_headers, out.wrap_headers)
   out.repeat_header = bool(cfg["repeat-header"] or cfg.repeat_header, out.repeat_header)
@@ -95,8 +119,14 @@ function M.for_table(options, attr)
   if attrs["smart-tables-profile"] then
     out.profile = attrs["smart-tables-profile"]
   end
+  if attrs["smart-tables-text-size"] then
+    out.text_size = text_size(attrs["smart-tables-text-size"], out.text_size)
+  end
   if attrs["smart-tables-stripe"] then
     out.stripe = bool(attrs["smart-tables-stripe"], out.stripe)
+  end
+  if attrs["smart-tables-row-rules"] then
+    out.row_rules = bool(attrs["smart-tables-row-rules"], out.row_rules)
   end
   if attrs["smart-tables-repeat-header"] then
     out.repeat_header = bool(attrs["smart-tables-repeat-header"], out.repeat_header)

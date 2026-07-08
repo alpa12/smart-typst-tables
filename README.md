@@ -54,6 +54,7 @@ Set document-level defaults with `smart-tables`:
 ```yaml
 smart-tables:
   profile: academic
+  text-size: auto
   table-width: natural
   align: center
   optimize-widths: true
@@ -66,6 +67,7 @@ smart-tables:
 | Option | Default | Values | Effect |
 |---|---:|---|---|
 | `profile` | `academic` | `academic`, `compact`, `exam`, `plain` | Selects the visual profile used by the Typst helper: font size, cell insets, header fill, row rules, and spacing. |
+| `text-size` | `auto` | `auto`, a Typst size such as `0.88em` or `9pt`, or a number interpreted as `em` | Overrides the profile's table text size. Use `auto` to keep the selected profile's default size. |
 | `table-width` | `natural` | `natural`, `full` | Controls the overall width strategy. `natural` keeps the table close to its content width; `full` wraps the table in a full-width block and lets free-text or mixed columns receive flexible `fr` tracks. |
 | `align` | `center` | `left`, `center`, `right`, `none` | Aligns the whole rendered table or table figure. This is separate from per-column alignment, which is inferred from source alignment and column type. |
 | `optimize-widths` | `true` | `true`, `false` | Enables the layout engine. When `false`, the table is left unchanged because no column plan is produced. |
@@ -98,7 +100,9 @@ Use table-level attributes for local overrides:
 |---|---|---|
 | `smart-tables="false"` | `false`, `off` | Leaves this table unchanged. |
 | `smart-tables-profile="compact"` | `academic`, `compact`, `exam`, `plain` | Overrides `profile` for this table. |
+| `smart-tables-text-size="0.88em"` | `auto`, a Typst size such as `0.88em` or `9pt`, or a number interpreted as `em` | Overrides `text-size` for this table. |
 | `smart-tables-stripe="true"` | `true`, `false` | Overrides `stripe` for this table. |
+| `smart-tables-row-rules="false"` | `true`, `false` | Overrides `row-rules` for this table. |
 | `smart-tables-repeat-header="false"` | `true`, `false` | Overrides `repeat-header` for this table. |
 | `smart-tables-optimize-widths="false"` | `true`, `false` | Overrides `optimize-widths` for this table. |
 | `smart-tables-width="full"` | `natural`, `full` | Overrides `table-width` for this table. Use `full` when remaining width should be allocated to text-heavy columns. |

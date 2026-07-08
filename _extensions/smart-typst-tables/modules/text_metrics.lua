@@ -1,5 +1,25 @@
 local M = {}
 
+local function codepoints(text)
+  text = text or ""
+  local ok, out = pcall(function()
+    local chars = {}
+    for _, code in utf8.codes(text) do
+      table.insert(chars, code)
+    end
+    return chars
+  end)
+  if ok then
+    return out
+  end
+
+  local chars = {}
+  for i = 1, #text do
+    table.insert(chars, text:byte(i))
+  end
+  return chars
+end
+
 function M.stringify_blocks(blocks)
   if blocks == nil then
     return ""
@@ -10,18 +30,12 @@ function M.stringify_blocks(blocks)
 end
 
 function M.len(text)
-  text = text or ""
-  local n = 0
-  for _ in utf8.codes(text) do
-    n = n + 1
-  end
-  return n
+  return #codepoints(text)
 end
 
 function M.visual_width(text)
-  text = text or ""
   local width = 0
-  for _, code in utf8.codes(text) do
+  for _, code in ipairs(codepoints(text)) do
     local ch = utf8.char(code)
     if ch:match("[%s%.,;:!'’%-]") then
       width = width + 0.35

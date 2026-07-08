@@ -48,8 +48,16 @@ local function typst_align(value)
   return "center"
 end
 
+local function text_size_arg(value)
+  if value == nil or value == "" or value == "auto" then
+    return ""
+  end
+  return ", text-size: " .. value
+end
+
 function M.render(model, plan, options)
   local p = "smart-table-profile(\"" .. escape(plan.profile) .. "\")"
+  local scope_args = "profile: \"" .. escape(plan.profile) .. "\"" .. text_size_arg(plan.text_size)
   local items = {}
 
   table.insert(items, "table.header(")
@@ -113,7 +121,7 @@ function M.render(model, plan, options)
   end
 
   local table_code = table.concat({
-    "smart-table-scope(profile: \"" .. escape(plan.profile) .. "\")[",
+    "smart-table-scope(" .. scope_args .. ")[",
     "  " .. table_expression:gsub("\n", "\n  "),
     "]"
   }, "\n")

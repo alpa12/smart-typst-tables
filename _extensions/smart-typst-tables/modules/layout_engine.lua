@@ -129,6 +129,7 @@ function M.plan(model, options)
     header_lines = header_lines,
     types = types,
     profile = options.profile,
+    text_size = options.text_size,
     repeat_header = options.repeat_header,
     stripe = options.stripe,
     row_rules = options.row_rules,

@@ -66,6 +66,7 @@ Configure the extension with `smart-tables`:
 ```yaml
 smart-tables:
   profile: academic
+  text-size: auto
   optimize-widths: true
   wrap-headers: balanced
   repeat-header: true
@@ -85,6 +86,8 @@ Supported profiles:
 
 Useful layout choices:
 
+- `text-size: auto` keeps the selected profile's default text size.
+- `text-size: 0.88em` or `text-size: 9pt` overrides table text size.
 - `table-width: natural` keeps short tables close to their content width.
 - `align: center` centers natural-width tables.
 - `table-width: full` allocates remaining width to free-text or mixed columns.
@@ -111,7 +114,9 @@ Supported table attributes:
 
 - `smart-tables="false"` or `smart-tables="off"`: leave the table unchanged.
 - `smart-tables-profile="academic|compact|exam|plain"`.
+- `smart-tables-text-size="0.88em"`.
 - `smart-tables-stripe="true|false"`.
+- `smart-tables-row-rules="true|false"`.
 - `smart-tables-repeat-header="true|false"`.
 - `smart-tables-optimize-widths="true|false"`.
 - `smart-tables-width="natural|full"`.

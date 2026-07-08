@@ -75,6 +75,101 @@ knitr::kable(transactions, caption = "Transactions générées par knitr::kable(
 | Communication | 15% | Présente les résultats avec unités, dates et libellés cohérents. |
 :::
 
+## Profiles
+
+The `profile` option changes table density and decoration without changing the
+source table.
+
+### Academic
+
+::: {smart-tables-profile="academic"}
+| Élément | Valeur | Commentaire |
+|---|---:|---|
+| Score moyen | 84.2% | Présentation standard pour un rapport. |
+| Écart-type | 7.8 | Règles et espacement modérés. |
+| Observations | 126 | Style par défaut. |
+:::
+
+### Compact
+
+::: {smart-tables-profile="compact"}
+| Élément | Valeur | Commentaire |
+|---|---:|---|
+| Score moyen | 84.2% | Utile quand l'espace est limité. |
+| Écart-type | 7.8 | Texte et marges plus serrés. |
+| Observations | 126 | Convient aux annexes. |
+:::
+
+### Exam
+
+::: {smart-tables-profile="exam"}
+| Élément | Valeur | Commentaire |
+|---|---:|---|
+| Score moyen | 84.2% | Plus lisible dans un énoncé. |
+| Écart-type | 7.8 | Espacement légèrement plus généreux. |
+| Observations | 126 | Bon pour les documents pédagogiques. |
+:::
+
+### Plain
+
+::: {smart-tables-profile="plain"}
+| Élément | Valeur | Commentaire |
+|---|---:|---|
+| Score moyen | 84.2% | Décoration minimale. |
+| Écart-type | 7.8 | Mise en page optimisée seulement. |
+| Observations | 126 | Aucune alternance de couleur. |
+:::
+
+## Option overrides
+
+### Text size
+
+::: {smart-tables-text-size="0.88em"}
+| Produit | Prime | Ratio | Note |
+|---|---:|---:|---|
+| Assurance habitation | 1 120 $ | 64.0% | Texte réduit avec text-size. |
+| Assurance auto | 860 $ | 58.5% | Les largeurs restent optimisées. |
+| Assurance entreprise | 2 430 $ | 72.1% | Les nombres restent alignés à droite. |
+:::
+
+### Full width for text-heavy tables
+
+::: {smart-tables-width="full" smart-tables-align="center"}
+| Étape | Responsable | Résultat attendu | Commentaire de suivi |
+|---|---|---|---|
+| Collecte | Analyste | Données validées | La colonne de commentaire reçoit l'espace restant. |
+| Modélisation | Actuaire | Hypothèses documentées | Les colonnes textuelles peuvent utiliser des pistes flexibles. |
+| Révision | Équipe produit | Décision prête | Le tableau occupe toute la largeur disponible. |
+:::
+
+### Alignment
+
+::: {smart-tables-align="left"}
+| Tableau | Alignement | Usage |
+|---|---|---|
+| Court résumé | Gauche | Utile quand le tableau introduit un paragraphe. |
+| Annexe | Gauche | Évite un effet trop centré dans une page dense. |
+:::
+
+### Stripe and row rules
+
+::: {smart-tables-stripe="true" smart-tables-row-rules="false"}
+| Cohorte | Polices | Prime moyenne |
+|---|---:|---:|
+| 2023 | 82 | 910 $ |
+| 2024 | 117 | 1 040 $ |
+| 2025 | 139 | 1 180 $ |
+:::
+
+### Header repetition
+
+::: {smart-tables-repeat-header="false"}
+| Paramètre | Défaut | Effet |
+|---|---|---|
+| repeat-header | true | Répète les en-têtes sur les sauts de page. |
+| Override local | false | Désactive la répétition pour ce tableau. |
+:::
+
 ## Opt-out
 
 ::: {smart-tables="false"}
