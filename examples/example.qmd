@@ -2,6 +2,7 @@
 title: "Smart Typst Tables"
 format: typst
 filters:
+  - quarto
   - ../_extensions/smart-typst-tables/smart-typst-tables.lua
 execute:
   echo: false
