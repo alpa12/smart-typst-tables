@@ -64,7 +64,7 @@ function M.render(model, plan, options)
     local comma = col == model.n_cols and "" or ","
     table.insert(items, string.format(
       "  table.cell(align: %s, fill: %s.header-fill)[#strong[%s]]%s",
-      align(plan.align[col]),
+      align(plan.col_align[col]),
       p,
       header,
       comma
@@ -83,7 +83,7 @@ function M.render(model, plan, options)
       local comma = ","
       table.insert(items, string.format(
         "table.cell(align: %s%s)[%s]%s",
-        align(plan.align[col]),
+        align(plan.col_align[col]),
         fill,
         escape(source and source.text or ""),
         comma

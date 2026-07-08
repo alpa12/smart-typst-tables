@@ -125,7 +125,7 @@ function M.plan(model, options)
 
   return {
     columns = columns,
-    align = aligns,
+    col_align = aligns,
     header_lines = header_lines,
     types = types,
     profile = options.profile,
