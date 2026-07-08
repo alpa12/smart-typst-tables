@@ -11,6 +11,12 @@ local function fmt(x)
   return out
 end
 
+local function numeric_like_width(min_width, header_need, need, value_need)
+  local upper = math.max(10, header_need, value_need)
+  local target = math.max(need + 0.2, value_need)
+  return math.max(min_width, math.min(upper, target))
+end
+
 local function type_width(kind, header_lines, values, n_cols)
   local line_width = 0
   for _, line in ipairs(header_lines) do
@@ -27,6 +33,7 @@ local function type_width(kind, header_lines, values, n_cols)
   local maxv = metrics.max(value_widths)
   local header_need = line_width + 0.35
   local need = math.max(header_need, med * 0.65, math.min(maxv, 42) * 0.25, unbreakable * 0.7)
+  local numeric_value_need = maxv + 0.85
 
   if kind == "date" then
     return "fixed", math.max(5.7, math.min(math.max(6.6, header_need), need + 0.2))
@@ -35,10 +42,10 @@ local function type_width(kind, header_lines, values, n_cols)
     return "fixed", math.max(4.6, math.min(math.max(6.2, header_need), need + 0.2))
   end
   if kind == "currency" then
-    return "fixed", math.max(4.7, math.min(math.max(6.4, header_need), need + 0.2))
+    return "fixed", numeric_like_width(4.7, header_need, need, numeric_value_need)
   end
   if kind == "percentage" or kind == "numeric" then
-    return "fixed", math.max(4.0, math.min(math.max(6.4, header_need), need + 0.2))
+    return "fixed", numeric_like_width(4.0, header_need, need, numeric_value_need)
   end
   if kind == "identifier" or kind == "boolean" then
     return "auto", 0
