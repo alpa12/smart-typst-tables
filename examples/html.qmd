@@ -1,0 +1,46 @@
+---
+title: "Smart Tables HTML"
+format: html
+filters:
+  - quarto
+  - ../_extensions/smart-typst-tables/smart-typst-tables.lua
+smart-tables:
+  profile: academic
+  table-width: natural
+  align: center
+  stripe: true
+---
+
+## Caption and Cross-Reference
+
+::: {#tbl-html-schedule}
+
+| Workstream | Start date | Review date | Planned hours | On-time rate | Notes |
+|---|---|---|---:|---:|---|
+| Discovery | 2026-01-06 | 2026-01-20 | 80 | 91.0% | Stable delivery with a few integration delays. |
+| Prototype | 2026-01-21 | 2026-02-18 | 160 | 88.5% | Batch validation adds some review time. |
+| Pilot | 2026-02-19 | 2026-03-11 | 120 | 94.2% | Small queue and fast feedback loops. |
+
+HTML schedule summary.
+:::
+
+See @tbl-html-schedule.
+
+## Compact Override
+
+::: {smart-tables-profile="compact" smart-tables-width="full" smart-tables-stripe="false"}
+| Criterion | Weight | What a complete answer should include |
+|---|---:|---|
+| Scope | 20% | Defines the workstream, owner, and expected deliverable. |
+| Evidence | 30% | Uses dates, counts, and rates to support the conclusion. |
+| Interpretation | 35% | Explains the operational meaning of the trend or exception. |
+| Communication | 15% | Presents the result with clear labels and units. |
+:::
+
+## Opt-Out
+
+::: {smart-tables="false"}
+| A | B |
+|---|---|
+| This table | is left unchanged |
+:::

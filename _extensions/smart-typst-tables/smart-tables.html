@@ -1,0 +1,175 @@
+<style>
+.smart-table-wrap {
+  --smart-table-font-size: 0.92em;
+  --smart-table-leading: 1.28;
+  --smart-table-inset-x: 0.55em;
+  --smart-table-inset-y: 0.38em;
+  --smart-table-header-fill: #f2f2f2;
+  --smart-table-stripe-fill: #fafafa;
+  --smart-table-header-stroke: #222;
+  --smart-table-row-stroke: #e1e1e1;
+  --smart-table-header-stroke-width: 1px;
+  --smart-table-row-stroke-width: 1px;
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  margin: 1rem 0;
+  overflow-x: auto;
+}
+
+.smart-table-wrap.smart-table-align-left {
+  justify-content: flex-start;
+}
+
+.smart-table-wrap.smart-table-align-center {
+  justify-content: center;
+}
+
+.smart-table-wrap.smart-table-align-right {
+  justify-content: flex-end;
+}
+
+.smart-table-wrap.smart-table-align-none {
+  display: block;
+}
+
+.smart-table {
+  border-collapse: collapse;
+  border-spacing: 0;
+  width: auto;
+  max-width: 100%;
+  margin: 0;
+  font-size: var(--smart-table-font-size);
+  line-height: var(--smart-table-leading);
+  color: inherit;
+}
+
+.smart-table.smart-table-width-natural {
+  width: max-content;
+}
+
+.smart-table.smart-table-width-full {
+  width: 100%;
+}
+
+.smart-table caption {
+  caption-side: top;
+  margin-bottom: 0.45em;
+  text-align: inherit;
+}
+
+.smart-table th,
+.smart-table td {
+  padding: var(--smart-table-inset-y) var(--smart-table-inset-x);
+  vertical-align: top;
+  border: 0;
+  background-clip: padding-box;
+}
+
+.smart-table thead th {
+  background: var(--smart-table-header-fill);
+  border-bottom: var(--smart-table-header-stroke-width) solid var(--smart-table-header-stroke);
+  font-weight: 650;
+}
+
+.smart-table.smart-table-row-rules tbody tr + tr td {
+  border-top: var(--smart-table-row-stroke-width) solid var(--smart-table-row-stroke);
+}
+
+.smart-table.smart-table-stripe tbody tr:nth-child(even) td {
+  background: var(--smart-table-stripe-fill);
+}
+
+.smart-table-cell {
+  display: block;
+  width: 100%;
+}
+
+.smart-table-align-left {
+  text-align: left;
+}
+
+.smart-table-align-center {
+  text-align: center;
+}
+
+.smart-table-align-right {
+  text-align: right;
+}
+
+.smart-table-nowrap {
+  white-space: nowrap;
+}
+
+.smart-table-profile-academic {
+  --smart-table-font-size: 0.92em;
+  --smart-table-leading: 1.28;
+  --smart-table-inset-x: 0.55em;
+  --smart-table-inset-y: 0.38em;
+  --smart-table-header-fill: #f2f2f2;
+  --smart-table-stripe-fill: #fafafa;
+  --smart-table-header-stroke: #222;
+  --smart-table-row-stroke: #e1e1e1;
+  --smart-table-header-stroke-width: 1px;
+  --smart-table-row-stroke-width: 1px;
+}
+
+.smart-table-profile-compact {
+  --smart-table-font-size: 0.78em;
+  --smart-table-leading: 1.18;
+  --smart-table-inset-x: 0.34em;
+  --smart-table-inset-y: 0.2em;
+  --smart-table-header-fill: #e8e8e8;
+  --smart-table-stripe-fill: #fafafa;
+  --smart-table-header-stroke: #222;
+  --smart-table-row-stroke: #dddddd;
+  --smart-table-header-stroke-width: 1px;
+  --smart-table-row-stroke-width: 1px;
+}
+
+.smart-table-profile-exam {
+  --smart-table-font-size: 1em;
+  --smart-table-leading: 1.36;
+  --smart-table-inset-x: 0.75em;
+  --smart-table-inset-y: 0.55em;
+  --smart-table-header-fill: #ececec;
+  --smart-table-stripe-fill: #f8f8f8;
+  --smart-table-header-stroke: #111;
+  --smart-table-row-stroke: #cccccc;
+  --smart-table-header-stroke-width: 2px;
+  --smart-table-row-stroke-width: 1px;
+}
+
+.smart-table-profile-plain {
+  --smart-table-font-size: 0.92em;
+  --smart-table-leading: 1.28;
+  --smart-table-inset-x: 0.48em;
+  --smart-table-inset-y: 0.32em;
+  --smart-table-header-fill: transparent;
+  --smart-table-stripe-fill: transparent;
+  --smart-table-header-stroke: #555;
+  --smart-table-row-stroke: transparent;
+  --smart-table-header-stroke-width: 1px;
+  --smart-table-row-stroke-width: 0;
+}
+
+.reveal .smart-table-wrap {
+  margin: 0.6em 0;
+}
+
+.reveal .smart-table {
+  font-size: var(--smart-table-font-size);
+}
+
+.reveal .smart-table th,
+.reveal .smart-table td {
+  padding: var(--smart-table-inset-y) var(--smart-table-inset-x);
+}
+
+@media print {
+  .smart-table.smart-table-repeat-header thead {
+    display: table-header-group;
+  }
+}
+</style>

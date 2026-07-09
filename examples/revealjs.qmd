@@ -1,0 +1,39 @@
+---
+title: "Smart Tables Revealjs"
+format:
+  revealjs:
+    slide-number: true
+filters:
+  - quarto
+  - ../_extensions/smart-typst-tables/smart-typst-tables.lua
+smart-tables:
+  profile: compact
+  table-width: full
+  align: center
+  stripe: true
+---
+
+## Reveal Table
+
+::: {#tbl-reveal-summary smart-tables-profile="compact" smart-tables-max-header-lines="2"}
+
+| Team | Open tasks | Average cycle time | On-time rate | Follow-up comment |
+|---|---:|---:|---:|---|
+| Platform | 42 | 6.4 days | 91.0% | Stable delivery with a few integration delays. |
+| Data | 31 | 5.8 days | 88.5% | Batch validation adds some review time. |
+| Design | 18 | 4.1 days | 94.2% | Small queue and fast feedback loops. |
+
+Reveal summary table.
+:::
+
+See @tbl-reveal-summary.
+
+## Plain Profile
+
+::: {smart-tables-profile="plain" smart-tables-width="natural" smart-tables-align="left"}
+| Item | Value | Comment |
+|---|---:|---|
+| Average score | 84.2% | Standard presentation for slides. |
+| Standard deviation | 7.8 | Minimal decoration. |
+| Observations | 126 | Natural width. |
+:::

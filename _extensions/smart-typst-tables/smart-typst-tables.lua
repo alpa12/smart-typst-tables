@@ -12,6 +12,7 @@ local config = require("config")
 local table_ast = require("table_ast")
 local layout_engine = require("layout_engine")
 local typst_writer = require("typst_writer")
+local html_transformer = require("html_transformer")
 local diagnostics = require("diagnostics")
 
 local state = {
@@ -26,13 +27,40 @@ local function is_typst()
   return FORMAT == "typst" or (FORMAT and FORMAT:match("^typst"))
 end
 
-local function include_helpers()
-  if state.helper_injected then
+local function is_html()
+  if quarto and quarto.doc and quarto.doc.is_format then
+    return quarto.doc.is_format("html") or quarto.doc.is_format("revealjs")
+  end
+  return FORMAT == "html" or FORMAT == "html5" or FORMAT == "revealjs" or (FORMAT and FORMAT:match("html"))
+end
+
+local function target_format()
+  if is_typst() then
+    return "typst"
+  end
+  if is_html() then
+    return "html"
+  end
+  return nil
+end
+
+local function include_typst_helpers()
+  if state.helper_injected == "typst" then
     return
   end
-  state.helper_injected = true
+  state.helper_injected = "typst"
   if quarto and quarto.doc and quarto.doc.include_file then
     quarto.doc.include_file("in-header", "smart-typst-tables.typ")
+  end
+end
+
+local function include_html_helpers()
+  if state.helper_injected == "html" then
+    return
+  end
+  state.helper_injected = "html"
+  if quarto and quarto.doc and quarto.doc.include_file then
+    quarto.doc.include_file("in-header", "smart-tables.html")
   end
 end
 
@@ -94,8 +122,24 @@ local function disable_table(tbl)
   tbl.attr.attributes["smart-tables"] = "false"
 end
 
+local function is_processed(tbl)
+  local attrs = tbl.attr and tbl.attr.attributes or {}
+  return attrs["data-smart-tables-processed"] == "true"
+end
+
+local function mark_processed(tbl)
+  tbl.attr = tbl.attr or pandoc.Attr()
+  tbl.attr.attributes = tbl.attr.attributes or {}
+  tbl.attr.attributes["data-smart-tables-processed"] = "true"
+end
+
 local function render_table(tbl, attr)
-  if not is_typst() then
+  local target = target_format()
+  if not target then
+    return nil
+  end
+
+  if is_processed(tbl) then
     return nil
   end
 
@@ -103,6 +147,9 @@ local function render_table(tbl, attr)
   local model = table_ast.from_pandoc_table(tbl)
   if attr then
     model.attr = merge_attrs(model.attr, attr)
+    if target == "html" then
+      tbl.attr = model.attr
+    end
   end
   local table_options = config.for_table(options, model.attr)
 
@@ -123,18 +170,24 @@ local function render_table(tbl, attr)
     return nil
   end
 
-  local typst, writer_reason = typst_writer.render(model, plan, table_options)
-  if not typst then
-    diagnostics.debug(options, "table skipped: " .. writer_reason)
-    return nil
+  if target == "typst" then
+    local typst, writer_reason = typst_writer.render(model, plan, table_options)
+    if not typst then
+      diagnostics.debug(options, "table skipped: " .. writer_reason)
+      return nil
+    end
+
+    include_typst_helpers()
+    return pandoc.RawBlock("typst", typst)
   end
 
-  include_helpers()
-  return pandoc.RawBlock("typst", typst)
+  mark_processed(tbl)
+  include_html_helpers()
+  return html_transformer.render(tbl, model, plan, table_options)
 end
 
 local function div_filter(div)
-  if not is_typst() or not has_table_options(div.attr) then
+  if not target_format() or not has_table_options(div.attr) then
     return nil
   end
   if #div.content ~= 1 or div.content[1].t ~= "Table" then
@@ -155,7 +208,7 @@ local function table_filter(tbl)
 end
 
 function Pandoc(doc)
-  if not is_typst() then
+  if not target_format() then
     return doc
   end
 

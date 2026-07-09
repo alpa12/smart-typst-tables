@@ -748,3 +748,42 @@ this document before continuing.
   <https://typst.app/docs/reference/model/table/>
 - Typst `tablex` package documentation:
   <https://typst.app/universe/package/tablex/>
+
+## 16. HTML and revealjs backend addendum
+
+The extension can support HTML and revealjs without changing the Typst-first
+layout rationale. The shared Lua pipeline remains:
+
+```text
+Pandoc Table
+  ↓
+neutral table model
+  ↓
+type inference and header wrapping
+  ↓
+layout plan
+```
+
+The backend decision differs by output format:
+
+- Typst replaces eligible tables with raw native Typst because Pandoc's Typst
+  writer cannot express the desired table tracks and styling precisely enough.
+- HTML and revealjs should preserve Pandoc/Quarto's native table output wherever
+  possible. Browser table layout is already strong, and preserving the `Table`
+  node protects captions, identifiers, cross-references, accessibility
+  attributes, and revealjs integration.
+
+The HTML backend therefore mutates eligible `Table` nodes conservatively:
+
+- add table and wrapper classes;
+- add CSS profiles for `academic`, `compact`, `exam`, and `plain`;
+- apply inferred column alignment through Pandoc colspecs and inline spans;
+- apply balanced header wrapping with `LineBreak` in header cells;
+- use a responsive wrapper for `natural` and `full` width strategies;
+- leave unsupported or disabled tables unchanged.
+
+Options should keep the same names across targets, but their exact rendering
+contract is format-specific. In particular, Typst `fr` tracks do not map
+directly to HTML table columns, and `repeat-header` is meaningful for Typst page
+breaks but only helps print-oriented HTML where the browser supports repeated
+table headers.

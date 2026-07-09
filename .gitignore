@@ -3,6 +3,7 @@
 !_extensions/smart-typst-tables/smart-typst-tables.typ
 *.pdf
 *.html
+!_extensions/smart-typst-tables/smart-tables.html
 .DS_Store
 .Rhistory
 .RData
