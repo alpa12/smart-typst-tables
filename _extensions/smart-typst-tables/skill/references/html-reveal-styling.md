@@ -37,6 +37,11 @@ KPI summary.
   --smart-table-row-stroke: #bfd0dd;
   --smart-table-header-stroke-width: 2px;
   --smart-table-row-stroke-width: 1px;
+  --smart-table-border: 1px solid rgb(90 20 35 / 25%);
+  --smart-table-radius: 0.45em;
+  --smart-table-shadow: 0 0.15em 0.45em rgb(0 0 0 / 12%);
+  --smart-table-body-fill: rgb(255 250 251 / 92%);
+  --smart-table-header-color: #fff;
 }
 
 .table-brand .smart-table thead th { color: #fff; }
@@ -56,7 +61,7 @@ KPI summary.
 - `.smart-table-profile-*`: target `academic`, `compact`, `exam`, `plain`, or
   `reveal` only.
 - `.smart-table-type-*`: target inferred types such as `numeric`, `currency`,
-  `percentage`, `date`, `duration`, and `free_text`.
+  `percentage`, `date`, `duration`, `formula`, and `free_text`.
 - `.smart-table-header-lines`: preserves the line breaks selected by the
   extension. Do not override its `white-space: nowrap`.
 
@@ -86,3 +91,9 @@ Use `.reveal .table-brand ...` for reveal-specific color or typography rules.
 Do not globally set `.smart-table { width: 100% }`, change
 `.smart-table-wrap` to `display: block`, or remove `.smart-table-scroll`.
 Those overrides defeat content-sized tables and safe overflow.
+
+The variables also include `--smart-table-border`, `--smart-table-radius`,
+`--smart-table-shadow`, `--smart-table-body-fill`, and
+`--smart-table-header-color`; `--smart-table-header-fill` accepts gradients.
+Keep the scroll wrapper's `overflow-x`, the wrapper's `display`, and planned
+table width/layout rules intact: they are structural rather than visual.

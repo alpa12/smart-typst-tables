@@ -2,6 +2,20 @@ local metrics = require("text_metrics")
 
 local M = {}
 
+-- Arithmetic expressions are prose-like table content, not compact numeric
+-- values.  Detect them before any header hint can influence the result.
+local function is_formula(value)
+  -- Keep conventional date values out of the expression path even though they
+  -- contain slashes. Other fraction-like values are formulae only when they
+  -- carry an arithmetic operator or an explicit equality.
+  if value:match("^%d%d%d%d%-%d%d%-%d%d$") or value:match("^%d?%d/%d?%d/%d%d%d%d$") then
+    return false
+  end
+  return value:find("=", 1, true) ~= nil or value:find("×", 1, true) ~= nil
+    or value:find("+", 1, true) ~= nil or value:find("−", 1, true) ~= nil
+    or (value:find("/", 1, true) ~= nil and value:find("%d+/%d+") ~= nil)
+end
+
 local function clean_values(values)
   local out = {}
   for _, value in ipairs(values) do
@@ -26,6 +40,21 @@ local function share(values, pattern)
   return n / #values
 end
 
+local function share_if(values, predicate)
+  if #values == 0 then return 0 end
+  local n = 0
+  for _, value in ipairs(values) do if predicate(value) then n = n + 1 end end
+  return n / #values
+end
+
+local function is_currency(value)
+  if not (value:find("$", 1, true) or value:find("€", 1, true) or value:find("£", 1, true)) then
+    return false
+  end
+  local number = value:gsub("$", ""):gsub("€", ""):gsub("£", "")
+  return number:match("^%s*%-?[%d%s,%.]+%s*$") ~= nil
+end
+
 function M.infer(header, values)
   values = clean_values(values)
   local header_lc = tostring(header or ""):lower()
@@ -33,25 +62,36 @@ function M.infer(header, values)
     return { type = "mixed", confidence = 0.2 }
   end
 
-  if share(values, "^%d%d%d%d%-%d%d%-%d%d$") >= 0.75
-    or share(values, "^%d?%d[/%-]%d?%d[/%-]%d%d%d%d$") >= 0.75
-    or header_lc:match("date") then
-    return { type = "date", confidence = 0.9 }
+  local formula_share = 0
+  for _, value in ipairs(values) do
+    if is_formula(value) then formula_share = formula_share + 1 end
   end
-  if header_lc:match("duration") or header_lc:match("durée")
-    or share(values, "^%d+%s+[Dd]ays?$") + share(values, "^%d+%s+[Ww]eeks?$") + share(values, "^%d+%s+[Mm]onths?$") + share(values, "^%d+%s*h%s*%d*%s*$") >= 0.65 then
-    return { type = "duration", confidence = 0.85 }
+  formula_share = formula_share / #values
+  if formula_share >= 0.5 then
+    return { type = "formula", confidence = formula_share, compact_share = 0,
+      reason = "arithmetic expressions in values" }
   end
-  if share(values, "^[$€£]%s*%-?[%d%s,%.]+$") >= 0.65
-    or share(values, "^%-?[%d%s,%.]+%s?[$€£]$") >= 0.65
-    or header_lc:match("prime") or header_lc:match("amount") or header_lc:match("montant") then
-    return { type = "currency", confidence = 0.85 }
+
+  local date_share = math.max(share(values, "^%d%d%d%d%-%d%d%-%d%d$"), share(values, "^%d?%d[/%-]%d?%d[/%-]%d%d%d%d$"))
+  if date_share >= 0.75 then
+    return { type = "date", confidence = date_share, compact_share = date_share, reason = "date-shaped values" }
   end
-  if share(values, "^%-?%d+[,.]?%d*%s?%%$") >= 0.65 or header_lc:match("ratio") or header_lc:match("rate") then
-    return { type = "percentage", confidence = 0.85 }
+  local duration_share = share(values, "^%d+%s+[Dd]ays?$") + share(values, "^%d+%s+[Ww]eeks?$") + share(values, "^%d+%s+[Mm]onths?$") + share(values, "^%d+%s*h%s*%d*%s*$")
+  if duration_share >= 0.65 then
+    return { type = "duration", confidence = duration_share, compact_share = duration_share, reason = "duration-shaped values" }
+  end
+  local currency_share = share_if(values, is_currency)
+  if currency_share >= 0.65 then
+    return { type = "currency", confidence = currency_share, compact_share = currency_share,
+      reason = "currency symbols in values" }
+  end
+  local percentage_share = share(values, "^%-?%d+[,.]?%d*%s?%%$")
+  if percentage_share >= 0.65 then
+    return { type = "percentage", confidence = percentage_share, compact_share = percentage_share,
+      reason = "percent signs in values" }
   end
   if share(values, "^[Tt]rue$") + share(values, "^[Ff]alse$") >= 0.75 then
-    return { type = "boolean", confidence = 0.8 }
+    return { type = "boolean", confidence = 0.8, compact_share = 0.8, reason = "boolean values" }
   end
 
   local numeric = 0
@@ -67,7 +107,8 @@ function M.infer(header, values)
     end
   end
   if numeric / #values >= 0.8 then
-    return { type = "numeric", confidence = 0.85 }
+    return { type = "numeric", confidence = numeric / #values, compact_share = numeric / #values,
+      reason = "numeric values" }
   end
 
   local lengths = {}
@@ -84,18 +125,18 @@ function M.infer(header, values)
   local med_len = metrics.median(lengths)
 
   if header_lc:match("id$") or header_lc:match("code") or max_len <= 8 then
-    return { type = "identifier", confidence = 0.7 }
+    return { type = "identifier", confidence = 0.7, compact_share = 0.8, reason = "short identifiers" }
   end
   if med_len >= 24 or max_len >= 36 then
-    return { type = "free_text", confidence = 0.85 }
+    return { type = "free_text", confidence = 0.85, compact_share = 0, reason = "long text values" }
   end
   if unique_count / #values <= 0.75 and max_len <= 18 then
-    return { type = "categorical", confidence = 0.75 }
+    return { type = "categorical", confidence = 0.75, compact_share = 0, reason = "repeated categories" }
   end
   if share(values, "^[%w_%-%.:/]+$") >= 0.8 and metrics.max(lengths) >= 16 then
-    return { type = "code", confidence = 0.7 }
+    return { type = "code", confidence = 0.7, compact_share = 0.8, reason = "code-like values" }
   end
-  return { type = "mixed", confidence = 0.45 }
+  return { type = "mixed", confidence = 0.45, compact_share = 0, reason = "mixed values" }
 end
 
 return M

@@ -43,6 +43,12 @@ smart-tables:
   `smart-tables-header-lines="2"` to force two deliberate header rows when
   enough words exist. A single-word label remains one line.
 - Use `diagnostics: true` when a table is unexpectedly unchanged.
+- Use `smart-tables-column-types="identifier,date,numeric"` or
+  `smart-tables-column-2="formula"` when a column's semantics are known.
+  Formulae are right-aligned with tabular figures and are never inferred as
+  currency merely because of their header.
+- Use `smart-tables-nowrap="none"` to let every body column wrap, or retain
+  `auto` (the default) to protect only consistently compact values.
 
 For a local exception, wrap the table in a Div:
 

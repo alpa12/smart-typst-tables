@@ -26,6 +26,11 @@
   --smart-table-row-stroke: #e1e1e1;
   --smart-table-header-stroke-width: 1px;
   --smart-table-row-stroke-width: 1px;
+  --smart-table-border: transparent;
+  --smart-table-radius: 0;
+  --smart-table-shadow: none;
+  --smart-table-body-fill: transparent;
+  --smart-table-header-color: inherit;
   display: table;
   box-sizing: border-box;
   max-width: none;
@@ -64,6 +69,10 @@
   font-size: var(--smart-table-font-size);
   line-height: var(--smart-table-leading);
   color: inherit;
+  background: var(--smart-table-body-fill);
+  border: var(--smart-table-border);
+  border-radius: var(--smart-table-radius);
+  box-shadow: var(--smart-table-shadow);
 }
 
 .smart-table.smart-table-width-natural {
@@ -99,17 +108,19 @@
 
 .smart-table thead th {
   background: var(--smart-table-header-fill);
+  color: var(--smart-table-header-color);
   border-bottom: var(--smart-table-header-stroke-width) solid var(--smart-table-header-stroke);
   font-weight: 650;
 }
 
 /* A grouped header is one visual unit: only its final row gets the strong
    separator. A row-spanning cell still reaches that final boundary itself. */
-.smart-table thead tr:not(:last-child) th:not([rowspan]) {
+.smart-table thead tr:not(:last-child) > th:not([rowspan]) {
   border-bottom: 0;
 }
 
-.smart-table thead tr:not(:last-child) th[rowspan] {
+.smart-table thead tr:not(:last-child) > th[rowspan],
+.smart-table thead tr:last-child > th {
   border-bottom: var(--smart-table-header-stroke-width) solid var(--smart-table-header-stroke);
 }
 
@@ -119,9 +130,7 @@
 
 .smart-table.smart-table-stripe tbody tr:nth-child(even) > th,
 .smart-table.smart-table-stripe tbody tr:nth-child(even) > td {
-  /* Use background-color with priority over the Reveal/Quarto base table
-     rules.  The profile variable remains the public customization hook. */
-  background-color: var(--smart-table-stripe-fill) !important;
+  background-color: var(--smart-table-stripe-fill);
 }
 
 .smart-table-cell {
@@ -152,6 +161,11 @@
 
 .smart-table-nowrap {
   white-space: nowrap;
+  max-width: none;
+}
+
+.smart-table-type-formula {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Header breaks are computed by the layout engine.  Preserve each calculated

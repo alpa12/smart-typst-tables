@@ -205,6 +205,7 @@ local function render_table(tbl, attr)
     diagnostics.debug(options, "table skipped: " .. plan_reason)
     return diagnostic_block(tbl, plan_reason, target)
   end
+  diagnostics.plan(table_options, plan)
 
   if target == "typst" then
     local typst, writer_reason = typst_writer.render(model, plan, table_options)

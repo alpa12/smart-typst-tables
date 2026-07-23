@@ -44,6 +44,11 @@ local function type_width(kind, header_lines, values, n_cols)
   if kind == "currency" then
     return "fixed", numeric_like_width(4.7, header_need, need, numeric_value_need)
   end
+  if kind == "formula" then
+    -- Formulae may contain spaces, but their rendered expression must inform
+    -- the intrinsic track rather than only its longest token.
+    return "fixed", math.max(10, math.min(30, maxv + 0.85))
+  end
   if kind == "percentage" or kind == "numeric" then
     return "fixed", numeric_like_width(4.0, header_need, need, numeric_value_need)
   end
@@ -76,7 +81,7 @@ local function alignment(kind, source)
   if source and source:match("Center") then
     return "center"
   end
-  if kind == "currency" or kind == "percentage" or kind == "numeric" then
+  if kind == "currency" or kind == "percentage" or kind == "numeric" or kind == "formula" then
     return "right"
   end
   if kind == "date" or kind == "duration" then
@@ -89,7 +94,7 @@ local function header_alignment(column_align, kind)
   if column_align == "right" or column_align == "center" then
     return "center"
   end
-  if kind == "date" or kind == "duration" or kind == "numeric" or kind == "currency" or kind == "percentage" then
+  if kind == "date" or kind == "duration" or kind == "numeric" or kind == "currency" or kind == "percentage" or kind == "formula" then
     return "center"
   end
   return "left"
@@ -112,10 +117,25 @@ function M.plan(model, options)
   for col = 1, model.n_cols do
     local values = table_ast.column_values(model, col)
     local inferred = type_inference.infer(headers[col], values)
+    local override = options.column_types and options.column_types[col]
+    if override and override ~= "auto" then
+      inferred = { type = override, confidence = 1, compact_share = override == "formula" and 0 or 1,
+        reason = "table-level type override" }
+    end
     local lines = header_wrap.wrap(headers[col], options.max_header_lines, options.header_lines)
     local width_kind, width_value = type_width(inferred.type, lines, values, model.n_cols)
 
     types[col] = inferred
+    local compact = inferred.compact_share or 0
+    local compact_type = inferred.type == "numeric" or inferred.type == "currency" or inferred.type == "percentage"
+      or inferred.type == "date" or inferred.type == "duration" or inferred.type == "identifier" or inferred.type == "code"
+    if options.nowrap == "all" then
+      inferred.nowrap = true
+    elseif options.nowrap == "none" then
+      inferred.nowrap = false
+    else
+      inferred.nowrap = compact_type and compact >= 0.8
+    end
     aligns[col] = alignment(inferred.type, model.colspecs[col] and model.colspecs[col].align)
     header_aligns[col] = header_alignment(aligns[col], inferred.type)
 

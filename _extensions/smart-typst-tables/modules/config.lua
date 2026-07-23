@@ -98,6 +98,8 @@ function M.defaults()
     explicit_widths = "respect",
     table_width = "natural",
     align = "center",
+    nowrap = "auto",
+    column_types = nil,
     profile_explicit = false,
     revealjs = {
       max_width = "100%",
@@ -206,6 +208,23 @@ function M.for_table(options, attr)
   end
   if attrs["smart-tables-align"] then
     out.align = attrs["smart-tables-align"]
+  end
+  if attrs["smart-tables-nowrap"] then
+    local nowrap = tostring(attrs["smart-tables-nowrap"]):lower()
+    if nowrap == "auto" or nowrap == "all" or nowrap == "none" then out.nowrap = nowrap end
+  end
+  if attrs["smart-tables-column-types"] then
+    out.column_types = {}
+    for value in tostring(attrs["smart-tables-column-types"]):gmatch("[^,%s]+") do
+      table.insert(out.column_types, value:lower())
+    end
+  end
+  for key, value in pairs(attrs) do
+    local index = key:match("^smart%-tables%-column%-(%d+)$")
+    if index then
+      out.column_types = out.column_types or {}
+      out.column_types[tonumber(index)] = tostring(value):lower()
+    end
   end
   return out
 end

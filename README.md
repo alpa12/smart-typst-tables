@@ -105,7 +105,7 @@ smart-tables:
 | `header-lines` | `auto` | `auto`, positive integer | In `auto`, long labels normally use two balanced lines and only very long labels use more, up to `max-header-lines`. Set an integer to force that number of lines when the header has enough words. |
 | `repeat-header` | `true` | `true`, `false` | In Typst, emits a repeatable `table.header()`. In HTML/revealjs, marks the table for repeated headers in print CSS where supported. |
 | `stripe` | `false` | `true`, `false` | Adds alternating row fill for even body rows using the selected profile's stripe color. |
-| `diagnostics` | `false` | `true`, `false` | Logs skip reasons with the `[smart-typst-tables]` prefix while rendering. Use this when a table is unexpectedly unchanged. |
+| `diagnostics` | `false` | `true`, `false` | Logs skip reasons and, for processed tables, inferred types, confidence, nowrap policy, planned width, and rationale with the `[smart-typst-tables]` prefix. |
 
 Revealjs accepts a nested configuration block. When no profile is set,
 Revealjs automatically uses the readable `reveal` profile.
@@ -167,6 +167,9 @@ Use table-level attributes for local overrides:
 | `smart-tables-optimize-widths="false"` | `true`, `false` | Overrides `optimize-widths` for this table. |
 | `smart-tables-width="full"` | `natural`, `full` | Overrides `table-width` for this table. Use `full` when remaining width should be allocated to text-heavy columns. |
 | `smart-tables-align="left"` | `left`, `center`, `right`, `none` | Overrides whole-table alignment for this table. |
+| `smart-tables-column-types="identifier,date,numeric,currency"` | Comma-separated types | Declares types by logical column. Useful when source semantics are known better than inference. |
+| `smart-tables-column-2="formula"` | A type such as `formula`, `numeric`, `date` | Overrides one logical column; works with list-tables and spans. |
+| `smart-tables-nowrap="auto"` | `auto`, `all`, `none` | `auto` only protects columns whose values consistently match a compact inferred type; `none` permits wrapping everywhere. |
 
 ## Profiles
 
@@ -260,7 +263,10 @@ The variables exposed by `.smart-table-wrap` are `--smart-table-font-size`,
 `--smart-table-leading`, `--smart-table-inset-x`, `--smart-table-inset-y`,
 `--smart-table-header-fill`, `--smart-table-stripe-fill`,
 `--smart-table-header-stroke`, `--smart-table-row-stroke`,
-`--smart-table-header-stroke-width`, and `--smart-table-row-stroke-width`.
+`--smart-table-header-stroke-width`, `--smart-table-row-stroke-width`,
+`--smart-table-border`, `--smart-table-radius`, `--smart-table-shadow`,
+`--smart-table-body-fill`, and `--smart-table-header-color`. Header fills may
+use any CSS background value, including a gradient.
 
 For Revealjs, scope slide-specific rules with `.reveal` and prefer the
 configuration block for geometry:
@@ -283,7 +289,9 @@ smart-tables:
 
 ### Preserve layout behavior
 
-Do not globally force `.smart-table` to `width: 100%`, change
+The structural rules that should remain intact are the scroll wrapper's
+`overflow-x` and width, the inner wrapper's intrinsic `display`, and the
+table's planned `width`/`table-layout` declarations. Do not globally force `.smart-table` to `width: 100%`, change
 `.smart-table-wrap` to `display: block`, or remove the nested
 `.smart-table-scroll` container: those rules undo natural-width sizing or hide
 wide columns. Use `smart-tables-width="full"` when a particular table should

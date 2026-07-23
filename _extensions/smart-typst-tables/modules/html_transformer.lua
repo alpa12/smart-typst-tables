@@ -107,8 +107,7 @@ local function cell_classes(plan, col, is_header)
   -- Headers have already received deliberate line breaks from header_wrap.
   -- Do not turn those breaks into a minimum-width constraint: a narrow
   -- numeric column may still need its title to wrap in a small container.
-  if not is_header and (kind == "numeric" or kind == "currency" or kind == "percentage" or kind == "date" or kind == "duration"
-      or (kind == "identifier" and (header_text:match("code") or header_text:match("^id$") or header_text:match("identifiant")))) then
+  if not is_header and inferred and inferred.nowrap then
     table.insert(classes, "smart-table-nowrap")
   end
 
@@ -152,7 +151,7 @@ local function style_cell(cell, classes, scope, width)
     cell.attr = set_attribute(cell.attr, "scope", scope)
   end
   if width then
-    cell.attr = append_style(cell.attr, "width:" .. width .. ";max-width:" .. width .. ";")
+    cell.attr = append_style(cell.attr, "width:" .. width .. ";")
   end
 end
 
@@ -239,14 +238,14 @@ end
 local function html_column_natural_width(model, plan, col)
   local kind = plan.types and plan.types[col] and plan.types[col].type or "mixed"
   local base = {
-    numeric = 3.5, currency = 4.5, percentage = 4,
+    numeric = 3.5, currency = 4.5, percentage = 4, formula = 10,
     date = 6.5, duration = 5.5, identifier = 6, categorical = 6.5,
     boolean = 4, code = 8, mixed = 9, free_text = 12,
   }
   local cap = {
     numeric = 8, currency = 9, percentage = 8.5,
     date = 8.5, duration = 7.5, identifier = 10, categorical = 10,
-    boolean = 6, code = 14, mixed = 15, free_text = 22,
+    boolean = 6, code = 14, formula = 30, mixed = 15, free_text = 22,
   }
   local header_need = max_line_width(plan.header_lines and plan.header_lines[col]) + 1.2
   local values = table_ast.column_values(model, col)
@@ -256,7 +255,9 @@ local function html_column_natural_width(model, plan, col)
     unbreakable = math.max(unbreakable, metrics.unbreakable_width(value))
   end
   local data_need = unbreakable + 1.2
-  if kind == "free_text" or kind == "mixed" then
+  if kind == "formula" then
+    data_need = metrics.max(visual) + 1.2
+  elseif kind == "free_text" or kind == "mixed" then
     data_need = math.max(data_need, metrics.median(visual) * 0.42 + 1.2)
   end
   local minimum = base[kind] or 9
@@ -316,6 +317,13 @@ reveal_track_width = function(model, plan, col)
   -- that calibrated track width. CSS nowrap still supplies the hard browser
   -- minimum for dates, amounts, and codes.
   local kind = plan.types and plan.types[col] and plan.types[col].type or "mixed"
+  if kind == "formula" then
+    local widest = 0
+    for _, value in ipairs(table_ast.column_values(model, col)) do
+      widest = math.max(widest, metrics.visual_width(value))
+    end
+    return string.format("%.1fem", widest + 0.4):gsub("%.0em", "em")
+  end
   if kind == "free_text" then
     local visual = {}
     for _, value in ipairs(table_ast.column_values(model, col)) do

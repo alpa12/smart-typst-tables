@@ -85,6 +85,34 @@ smart-tables:
 
 :::
 
+## Formulae remain expressions, not currency
+
+::: {#tbl-reveal-formula}
+
+| Calculation | Primes écrites pour année de calendrier 2023 |
+|---|---:|
+| First adjustment | 1 000 − 1 000 × 6/12 = 500 |
+| Second adjustment | 500 − 500 × 9/12 + 400 × 9/12 = 425 |
+
+:::
+
+## Grouped headers have one final separator
+
+::: {.list-table #tbl-reveal-grouped-header header-rows=2}
+
+- - Segment
+  - []{colspan=3}Facteur de classe
+- - []{rowspan=2}Commercial
+  - X
+  - Y
+  - Z
+- - North
+  - 1
+  - 2
+  - 3
+
+:::
+
 ## Scrollable {.scrollable}
 
 ::: {.callout-note}
