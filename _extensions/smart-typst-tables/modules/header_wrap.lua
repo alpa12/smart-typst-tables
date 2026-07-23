@@ -43,15 +43,27 @@ local function make_lines(words, breaks)
   return lines
 end
 
-function M.wrap(text, max_lines)
+function M.wrap(text, max_lines, forced_lines)
   text = tostring(text or "")
   max_lines = max_lines or 3
   local words = split_words(text)
-  if #words <= 1 or metrics.len(text) <= 10 then
+  if #words <= 1 then
     return { text }
   end
 
-  local line_count = math.min(max_lines, math.max(2, math.ceil(metrics.len(text) / 15)), #words)
+  local line_count
+  if forced_lines and forced_lines ~= "auto" then
+    line_count = math.min(math.max(1, tonumber(forced_lines) or 1), #words)
+  elseif metrics.len(text) <= 10 then
+    line_count = 1
+  elseif metrics.len(text) <= 38 then
+    -- Two balanced lines are usually the best compromise between a compact
+    -- table and an easily scannable header. Reserve three or more lines for
+    -- genuinely long labels.
+    line_count = math.min(2, max_lines, #words)
+  else
+    line_count = math.min(max_lines, math.max(2, math.ceil(metrics.len(text) / 22)), #words)
+  end
   local all = {}
   combinations(#words - 1, line_count - 1, 1, {}, all)
 
@@ -88,12 +100,12 @@ function M.wrap(text, max_lines)
   return best or { text }
 end
 
-function M.fit(text, max_lines, width)
+function M.fit(text, max_lines, width, forced_lines)
   text = tostring(text or "")
   if width and metrics.visual_width(text) <= width then
     return { text }
   end
-  return M.wrap(text, max_lines)
+  return M.wrap(text, max_lines, forced_lines)
 end
 
 return M

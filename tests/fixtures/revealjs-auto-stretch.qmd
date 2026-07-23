@@ -1,0 +1,19 @@
+---
+title: "RevealJS auto-stretch fixture"
+format:
+  revealjs:
+    auto-stretch: true
+filters:
+  - quarto
+  - ../../_extensions/smart-typst-tables/smart-typst-tables.lua
+smart-tables:
+  revealjs:
+    max-height: 65vh
+    overflow: auto
+---
+
+## Auto-stretch remains controlled
+
+| Team | Value | Description |
+|---|---:|---|
+| Data | 91,0 % | The table wrapper should scroll before a table forces excessive slide scaling. |

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Maintain Smart Typst Tables"
+  short_description: "Develop the Smart Typst Tables extension"
+  default_prompt: "Use $maintain-smart-typst-tables to safely extend and test this Quarto table extension."

@@ -1,4 +1,20 @@
 <style>
+.smart-table-scroll {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  margin: 1rem 0;
+  overflow-x: auto;
+}
+
+/* Quarto columns are flex items.  Their automatic minimum width can otherwise
+   hide the left or right edge of an intrinsically sized table instead of
+   letting this wrapper own the horizontal scroll. */
+.columns .smart-table-scroll,
+.column .smart-table-scroll {
+  min-width: 0;
+}
+
 .smart-table-wrap {
   --smart-table-font-size: 0.92em;
   --smart-table-leading: 1.28;
@@ -10,28 +26,33 @@
   --smart-table-row-stroke: #e1e1e1;
   --smart-table-header-stroke-width: 1px;
   --smart-table-row-stroke-width: 1px;
-  display: flex;
+  display: table;
   box-sizing: border-box;
-  width: 100%;
-  max-width: 100%;
-  margin: 1rem 0;
-  overflow-x: auto;
+  max-width: none;
 }
 
 .smart-table-wrap.smart-table-align-left {
-  justify-content: flex-start;
+  margin-left: 0;
+  margin-right: auto;
 }
 
 .smart-table-wrap.smart-table-align-center {
-  justify-content: center;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .smart-table-wrap.smart-table-align-right {
-  justify-content: flex-end;
+  margin-left: auto;
+  margin-right: 0;
 }
 
 .smart-table-wrap.smart-table-align-none {
   display: block;
+}
+
+.smart-table-wrap.smart-table-width-full {
+  display: block;
+  width: 100%;
 }
 
 .smart-table {
@@ -46,11 +67,20 @@
 }
 
 .smart-table.smart-table-width-natural {
-  width: max-content;
+  width: auto !important;
 }
 
 .smart-table.smart-table-width-full {
-  width: 100%;
+  width: 100% !important;
+}
+
+.smart-table.smart-table-layout-planned {
+  table-layout: fixed;
+}
+
+.smart-table.smart-table-width-natural.smart-table-layout-planned {
+  width: var(--smart-table-natural-width) !important;
+  max-width: none;
 }
 
 .smart-table caption {
@@ -73,6 +103,16 @@
   font-weight: 650;
 }
 
+/* A grouped header is one visual unit: only its final row gets the strong
+   separator. A row-spanning cell still reaches that final boundary itself. */
+.smart-table thead tr:not(:last-child) th:not([rowspan]) {
+  border-bottom: 0;
+}
+
+.smart-table thead tr:not(:last-child) th[rowspan] {
+  border-bottom: var(--smart-table-header-stroke-width) solid var(--smart-table-header-stroke);
+}
+
 .smart-table.smart-table-row-rules tbody tr + tr td {
   border-top: var(--smart-table-row-stroke-width) solid var(--smart-table-row-stroke);
 }
@@ -84,6 +124,15 @@
 .smart-table-cell {
   display: block;
   width: 100%;
+}
+
+/* Cell classes now live on Pandoc's th/td elements so rich content is never
+   reconstructed. Keep the table display model intact; inline wrapper spans
+   still use the block rule above. */
+.smart-table th.smart-table-cell,
+.smart-table td.smart-table-cell {
+  display: table-cell;
+  width: auto;
 }
 
 .smart-table-align-left {
@@ -99,6 +148,12 @@
 }
 
 .smart-table-nowrap {
+  white-space: nowrap;
+}
+
+/* Header breaks are computed by the layout engine.  Preserve each calculated
+   line as a unit; explicit <br> elements still create the requested rows. */
+.smart-table-header-lines {
   white-space: nowrap;
 }
 
@@ -154,8 +209,36 @@
   --smart-table-row-stroke-width: 0;
 }
 
-.reveal .smart-table-wrap {
+.reveal .smart-table-scroll {
   margin: 0.6em 0;
+}
+
+.reveal .smart-table-scroll.smart-table-reveal {
+  max-width: var(--smart-table-reveal-max-width, 100%);
+  max-height: var(--smart-table-reveal-max-height, 70vh);
+  overflow: var(--smart-table-reveal-overflow, auto);
+  align-items: flex-start;
+}
+
+.reveal .smart-table-profile-reveal {
+  --smart-table-font-size: 0.88em;
+  --smart-table-leading: 1.32;
+  --smart-table-inset-x: 0.48em;
+  --smart-table-inset-y: 0.34em;
+  --smart-table-header-fill: #dfe8f1;
+  --smart-table-stripe-fill: #f5f8fb;
+  --smart-table-header-stroke: #18324a;
+  --smart-table-row-stroke: #cdd8e2;
+  --smart-table-header-stroke-width: 2px;
+  --smart-table-row-stroke-width: 1px;
+}
+
+.reveal .columns .smart-table-scroll.smart-table-reveal {
+  max-height: min(var(--smart-table-reveal-max-height, 70vh), 58vh);
+}
+
+.reveal .scrollable .smart-table-scroll.smart-table-reveal {
+  max-height: none;
 }
 
 .reveal .smart-table {
@@ -165,6 +248,15 @@
 .reveal .smart-table th,
 .reveal .smart-table td {
   padding: var(--smart-table-inset-y) var(--smart-table-inset-x);
+}
+
+.smart-table-diagnostic {
+  margin: 0.35rem 0;
+  padding: 0.35rem 0.55rem;
+  color: #7a3e00;
+  background: #fff4dc;
+  border-left: 3px solid #d98d00;
+  font-size: 0.78em;
 }
 
 @media print {

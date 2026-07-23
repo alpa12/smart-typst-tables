@@ -95,13 +95,6 @@ local function header_alignment(column_align, kind)
   return "left"
 end
 
-local function numeric_width(column)
-  if type(column) == "string" then
-    return tonumber(column:match("^(%d+%.?%d*)em$"))
-  end
-  return nil
-end
-
 function M.plan(model, options)
   if not options.optimize_widths then
     return nil, "width optimization disabled"
@@ -119,7 +112,7 @@ function M.plan(model, options)
   for col = 1, model.n_cols do
     local values = table_ast.column_values(model, col)
     local inferred = type_inference.infer(headers[col], values)
-    local lines = header_wrap.wrap(headers[col], options.max_header_lines)
+    local lines = header_wrap.wrap(headers[col], options.max_header_lines, options.header_lines)
     local width_kind, width_value = type_width(inferred.type, lines, values, model.n_cols)
 
     types[col] = inferred
@@ -141,7 +134,7 @@ function M.plan(model, options)
   end
 
   for col = 1, model.n_cols do
-    header_lines[col] = header_wrap.fit(headers[col], options.max_header_lines, numeric_width(columns[col]))
+    header_lines[col] = header_wrap.wrap(headers[col], options.max_header_lines, options.header_lines)
   end
 
   local has_fr = false
@@ -152,7 +145,7 @@ function M.plan(model, options)
     end
   end
 
-  if fixed_total > 36 and model.n_cols >= 8 then
+  if fixed_total > 36 and model.n_cols >= 8 and options.output_target == "typst" then
     return nil, "fixed columns exceed safe width"
   end
 

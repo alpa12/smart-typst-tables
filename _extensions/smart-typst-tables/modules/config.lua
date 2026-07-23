@@ -73,6 +73,14 @@ local function positive_integer(value, default)
   return math.floor(value)
 end
 
+local function header_lines(value, default)
+  value = string_value(value, default)
+  if tostring(value):lower() == "auto" then
+    return "auto"
+  end
+  return positive_integer(value, default)
+end
+
 function M.defaults()
   return {
     enabled = true,
@@ -86,9 +94,39 @@ function M.defaults()
     fallback = "unchanged",
     diagnostics = false,
     max_header_lines = 3,
+    header_lines = "auto",
     explicit_widths = "respect",
     table_width = "natural",
     align = "center",
+    profile_explicit = false,
+    revealjs = {
+      max_width = "100%",
+      max_height = "70vh",
+      overflow = "auto",
+      font_size = "auto",
+    },
+  }
+end
+
+local function css_value(value, default)
+  value = string_value(value, default)
+  if value:match("[;{}\n\r]") then
+    return default
+  end
+  return value
+end
+
+local function revealjs_config(cfg, defaults)
+  cfg = cfg or {}
+  local overflow = string_value(cfg.overflow, defaults.overflow):lower()
+  if overflow ~= "auto" and overflow ~= "scroll" and overflow ~= "hidden" and overflow ~= "visible" then
+    overflow = defaults.overflow
+  end
+  return {
+    max_width = css_value(cfg["max-width"] or cfg.max_width, defaults.max_width),
+    max_height = css_value(cfg["max-height"] or cfg.max_height, defaults.max_height),
+    overflow = overflow,
+    font_size = text_size(cfg["font-size"] or cfg.font_size, defaults.font_size),
   }
 end
 
@@ -97,6 +135,7 @@ function M.from_meta(meta)
   local cfg = meta["smart-tables"] or meta["smart_typst_tables"] or {}
 
   out.enabled = bool(cfg.enabled, out.enabled)
+  out.profile_explicit = cfg.profile ~= nil
   out.profile = string_value(cfg.profile, out.profile)
   out.text_size = text_size(cfg["text-size"] or cfg.text_size, out.text_size)
   out.optimize_widths = bool(cfg["optimize-widths"] or cfg.optimize_widths, out.optimize_widths)
@@ -107,10 +146,23 @@ function M.from_meta(meta)
   out.fallback = string_value(cfg.fallback, out.fallback)
   out.diagnostics = bool(cfg.diagnostics, out.diagnostics)
   out.max_header_lines = positive_integer(cfg["max-header-lines"] or cfg.max_header_lines, out.max_header_lines)
+  out.header_lines = header_lines(cfg["header-lines"] or cfg.header_lines, out.header_lines)
   out.explicit_widths = string_value(cfg["explicit-widths"] or cfg.explicit_widths, out.explicit_widths)
   out.table_width = string_value(cfg["table-width"] or cfg.table_width, out.table_width)
   out.align = string_value(cfg.align, out.align)
+  out.revealjs = revealjs_config(cfg.revealjs, out.revealjs)
 
+  return out
+end
+
+function M.for_target(options, target)
+  local out = {}
+  for k, v in pairs(options) do
+    out[k] = v
+  end
+  if target == "revealjs" and not out.profile_explicit then
+    out.profile = "reveal"
+  end
   return out
 end
 
@@ -126,6 +178,7 @@ function M.for_table(options, attr)
   end
   if attrs["smart-tables-profile"] then
     out.profile = attrs["smart-tables-profile"]
+    out.profile_explicit = true
   end
   if attrs["smart-tables-text-size"] then
     out.text_size = text_size(attrs["smart-tables-text-size"], out.text_size)
@@ -141,6 +194,9 @@ function M.for_table(options, attr)
   end
   if attrs["smart-tables-max-header-lines"] then
     out.max_header_lines = positive_integer(attrs["smart-tables-max-header-lines"], out.max_header_lines)
+  end
+  if attrs["smart-tables-header-lines"] then
+    out.header_lines = header_lines(attrs["smart-tables-header-lines"], out.header_lines)
   end
   if attrs["smart-tables-optimize-widths"] then
     out.optimize_widths = bool(attrs["smart-tables-optimize-widths"], out.optimize_widths)

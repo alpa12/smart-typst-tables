@@ -91,11 +91,19 @@ function M.from_pandoc_table(tbl)
       has_spans = false,
       has_complex_content = false,
       has_explicit_widths = false,
+      has_pandoc_widths = false,
     },
   }
 
-  if tbl.attr and tbl.attr.attributes and tbl.attr.attributes["tbl-colwidths"] then
-    model.features.has_explicit_widths = true
+  if tbl.attr and tbl.attr.attributes then
+    if tbl.attr.attributes["tbl-colwidths"] or tbl.attr.attributes.widths then
+      model.features.has_explicit_widths = true
+    end
+  end
+  for _, spec in ipairs(model.colspecs) do
+    if tonumber(spec.width) and tonumber(spec.width) ~= 0 then
+      model.features.has_pandoc_widths = true
+    end
   end
 
   for _, section in ipairs({ model.header_rows, model.body_rows, model.footer_rows }) do
@@ -116,31 +124,67 @@ end
 
 function M.header_texts(model)
   local headers = {}
+  for i = 1, model.n_cols do
+    headers[i] = ""
+  end
   if #model.header_rows > 0 then
-    for _, cell in ipairs(model.header_rows[1].cells) do
-      table.insert(headers, cell.text)
-    end
-  else
-    for i = 1, model.n_cols do
-      table.insert(headers, "")
+    for _, logical in ipairs(M.logical_rows({ model.header_rows[1] })[1] or {}) do
+      headers[logical.column] = logical.cell.text
     end
   end
   return headers
 end
 
+-- Pandoc stores physical cells only. Resolve their logical column positions so
+-- HTML styling remains correct when rows contain rowspan or colspan cells.
+function M.logical_rows(rows)
+  local out, occupied = {}, {}
+  for _, row in ipairs(rows or {}) do
+    local cells, column = {}, 1
+    for _, cell in ipairs(row.cells or {}) do
+      while occupied[column] and occupied[column] > 0 do
+        column = column + 1
+      end
+      table.insert(cells, { cell = cell, column = column })
+      local col_span, row_span = cell.col_span or 1, cell.row_span or 1
+      if row_span > 1 then
+        for offset = 0, col_span - 1 do
+          occupied[column + offset] = math.max(occupied[column + offset] or 0, row_span)
+        end
+      end
+      column = column + col_span
+    end
+    table.insert(out, cells)
+    for key, remaining in pairs(occupied) do
+      occupied[key] = remaining - 1
+      if occupied[key] <= 0 then
+        occupied[key] = nil
+      end
+    end
+  end
+  return out
+end
+
 function M.column_values(model, col)
   local values = {}
-  for _, row in ipairs(model.body_rows) do
-    if row.cells[col] then
-      table.insert(values, row.cells[col].text)
+  for _, row in ipairs(M.logical_rows(model.body_rows)) do
+    for _, logical in ipairs(row) do
+      if logical.column == col then
+        table.insert(values, logical.cell.text)
+      end
     end
   end
   return values
 end
 
-function M.is_eligible(model, options)
+function M.is_eligible(model, options, target)
   if model.n_cols == 0 then
     return false, "no columns"
+  end
+  if target == "html" then
+    -- Browser table layout supports rich blocks, spans, explicit widths, and
+    -- wide tables, so Typst's safety restrictions do not apply here.
+    return true
   end
   if model.n_cols > 14 then
     return false, "too many columns"
@@ -151,7 +195,8 @@ function M.is_eligible(model, options)
   if model.features.has_complex_content then
     return false, "complex cell content is not supported yet"
   end
-  if model.features.has_explicit_widths and options.explicit_widths ~= "optimize" then
+  if (model.features.has_explicit_widths or model.features.has_pandoc_widths)
+    and options.explicit_widths ~= "optimize" then
     return false, "explicit source widths respected"
   end
   return true

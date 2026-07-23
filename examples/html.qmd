@@ -11,9 +11,9 @@ smart-tables:
   stripe: true
 ---
 
-## Caption and Cross-Reference
+## 1. Caption et référence croisée
 
-::: {#tbl-html-schedule}
+::: {#tbl-html-schedule smart-tables-header-lines="2"}
 
 | Workstream | Start date | Review date | Planned hours | On-time rate | Notes |
 |---|---|---|---:|---:|---|
@@ -26,9 +26,9 @@ HTML schedule summary.
 
 See @tbl-html-schedule.
 
-## Compact Override
+## 2. Profil compact et largeur complète
 
-::: {smart-tables-profile="compact" smart-tables-width="full" smart-tables-stripe="false"}
+::: {smart-tables-profile="compact" smart-tables-width="natural" smart-tables-stripe="false"}
 | Criterion | Weight | What a complete answer should include |
 |---|---:|---|
 | Scope | 20% | Defines the workstream, owner, and expected deliverable. |
@@ -37,10 +37,184 @@ See @tbl-html-schedule.
 | Communication | 15% | Presents the result with clear labels and units. |
 :::
 
-## Opt-Out
+## 3. Désactivation locale
 
 ::: {smart-tables="false"}
 | A | B |
 |---|---|
 | This table | is left unchanged |
 :::
+
+## 4. Profil examen
+
+::: {smart-tables-profile="exam" smart-tables-stripe="true"}
+| Question | Réponse | Barème |
+|---|---|---:|
+| Justifier le modèle | Argument clair et concis | 4 / 5 |
+| Calculer le résultat | Unités incluses | 8 / 10 |
+| Interpréter | Limites discutées | 3 / 5 |
+:::
+
+## 5. Profil minimal
+
+::: {smart-tables-profile="plain" smart-tables-width="natural" smart-tables-align="left"}
+| Indicateur | Valeur | Variation |
+|---|---:|---:|
+| Revenu | 1 234,50 € | +12,5 % |
+| Dépense | 980,00 € | -3,2 % |
+| Solde | 254,50 € | +41,0 % |
+:::
+
+## 6. Contenu riche dans les cellules
+
+| Ressource | Statut | Commentaire |
+|---|---|---|
+| [Guide Quarto](https://quarto.org) | *À lire* | Utiliser `filters:` après le filtre `quarto`. |
+| `smart-tables` | **Actif** | La formule $x^2 + y^2$ reste une expression mathématique. |
+| ![Icône décorative](https://dummyimage.com/24x24/3b82f6/ffffff.png&text=T) | En revue | Une image inline vérifie la conservation des attributs riches. |
+
+## 7. En-têtes longs et alignements explicites
+
+::: {smart-tables-header-lines=2}
+| Libellé descriptif de la mesure | Cible trimestrielle (%) | Écart par rapport au plan |
+|:---|:---:|---:|
+| Délai médian de traitement des demandes | 90,0 % | -2,5 % |
+| Satisfaction après accompagnement | 95,0 % | +1,2 % |
+| Taux de reprise des dossiers | 5,0 % | -0,8 % |
+:::
+
+## 8. Largeurs explicites
+
+::: {tbl-colwidths="[20,25,55]"}
+| Équipe | Budget | Observation détaillée |
+|---|---:|---|
+| Analyse | 14 500 € | Cette largeur vient de l’auteur et doit rester visible dans le navigateur. |
+| Design | 9 750 € | Les commentaires longs permettent de juger le wrapping naturel des cellules. |
+:::
+
+## 9. List-table simple
+
+::: {.list-table #tbl-html-list-simple header-rows=1 aligns="l,r,c"}
+
+- - Catégorie
+  - Alpha
+  - Bêta
+- - Nombre de réponses
+  - 1 250
+  - 980
+- - Taux de réussite
+  - 91,0 %
+  - 88,5 %
+
+List-table simple, avec alignements déclarés.
+:::
+
+## 10. List-table avec deux lignes d’en-tête et cellules fusionnées
+
+::: {.list-table #tbl-html-list-spans header-rows=2 header-cols=1 aligns="l,c,r"}
+
+- - Équipe
+  - []{colspan=2}Période courante
+- - Groupe
+  - Résultats
+  - Résultats
+- - Données
+  - []{rowspan=2}91,0 %
+  - 1 234,50 €
+- - Design
+  - [Voir le détail](https://example.com)
+
+Les cellules fusionnées doivent rester des cellules HTML natives.
+:::
+
+## 11. Table sans en-tête
+
+::: {.list-table header-rows=0}
+
+- - Projet A
+  - Démarré le 12/06/2026
+- - Projet B
+  - Durée estimée : 1 h 30
+- - Projet C
+  - Statut : ND
+
+:::
+
+## 12. Table dans un callout
+
+::: {.callout-note}
+
+## Vérification rapide
+
+| Point de contrôle | État |
+|---|---|
+| Caption et référence | OK |
+| Liens et code inline | OK |
+| Défilement horizontal | À évaluer |
+
+:::
+
+## 13. Table dans des colonnes
+
+::: {.columns}
+
+::: {.column width="60%"}
+| Fonctionnalité | Priorité | Commentaire |
+|---|---:|---|
+| Accessibilité | Haute | Vérifier la lecture des en-têtes et captions. |
+| Responsive | Haute | Vérifier le comportement avec une colonne voisine. |
+| Décoration | Moyenne | Ajuster seulement après les contraintes de lisibilité. |
+:::
+
+::: {.column width="40%"}
+
+Cette colonne sert à comparer la largeur disponible avec une table pleine page.
+
+:::
+
+:::
+
+## 14. Table R avec caption et label
+
+```{r}
+#| label: tbl-html-r
+#| tbl-cap: "Résultats produits par `knitr::kable()` en Markdown."
+#| output: asis
+
+results <- data.frame(
+  Groupe = c("Contrôle", "Intervention", "Suivi"),
+  Score = c("84,2 %", "91,0 %", "88,5 %"),
+  Réponse = c("NA", "1,2e3", "—")
+)
+knitr::kable(results, format = "pipe")
+```
+
+La table @tbl-html-r doit garder sa caption et son identifiant.
+
+## 15. Sortie HTML brute laissée intacte
+
+::: {#raw-kable-html}
+
+```{r}
+#| echo: false
+#| output: asis
+knitr::kable(
+  data.frame(A = 1:2, B = c("brut", "non transformé")),
+  format = "html",
+  table.attr = 'data-smart-tables-raw="true"'
+)
+```
+
+:::
+
+Cette table porte volontairement l’attribut `data-smart-tables-raw="true"` :
+elle est une sortie HTML brute. Son apparence de base vient du thème HTML de
+Quarto, mais elle ne doit recevoir ni classe `smart-table`, ni wrapper
+`smart-table-wrap`.
+
+## 16. Table très large et valeurs mixtes
+
+| Région | Segment | Code | Date | Durée | Budget | Taux | Statut | Responsable | Note détaillée |
+|---|---|---|---|---|---:|---:|---|---|---|
+| Est | Étudiant | E-102 | 12/06/2026 | 1 h 30 | 12 500 € | 91,0 % | Actif | Anaïs | Vérifier la barre de défilement et le comportement des valeurs non sécables. |
+| Ouest | Professionnel | W-208 | 14/06/2026 | 45 min | 9 875 € | 88,5 % | En revue | Malik | Les cellules longues doivent garder une lecture confortable. |

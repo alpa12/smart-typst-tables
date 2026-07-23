@@ -1,0 +1,46 @@
+---
+title: "Smart table RevealJS fixtures"
+format:
+  revealjs:
+    auto-stretch: false
+filters:
+  - quarto
+  - ../../_extensions/smart-typst-tables/smart-typst-tables.lua
+smart-tables:
+  revealjs:
+    max-width: 100%
+    max-height: 60vh
+    overflow: auto
+    font-size: auto
+---
+
+## Standalone
+
+| Team | Monthly amount | Long explanation |
+|---|---:|---|
+| Data | 1 234,50 € | A deliberately longer value that should wrap in a presentation. |
+
+## Columns
+
+::: {.columns}
+
+::: {.column width="65%"}
+| Team | Rate | Notes |
+|---|---:|---|
+| Data | 91,0 % | [Linked detail](https://example.com) with `code`. |
+:::
+
+::: {.column width="35%"}
+- Supporting point
+- Another point
+:::
+
+:::
+
+## Scrollable {.scrollable}
+
+::: {.callout-note}
+| Header one | Header two |
+|---|---|
+| `complex` content | $x^2$ remains intact |
+:::

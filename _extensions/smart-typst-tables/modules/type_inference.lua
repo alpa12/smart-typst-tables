@@ -6,7 +6,7 @@ local function clean_values(values)
   local out = {}
   for _, value in ipairs(values) do
     value = tostring(value or ""):gsub("^%s+", ""):gsub("%s+$", "")
-    if value ~= "" and value ~= "-" then
+    if value ~= "" and value ~= "-" and value ~= "—" and value:lower() ~= "na" and value:lower() ~= "nd" then
       table.insert(out, value)
     end
   end
@@ -33,13 +33,18 @@ function M.infer(header, values)
     return { type = "mixed", confidence = 0.2 }
   end
 
-  if share(values, "^%d%d%d%d%-%d%d%-%d%d$") >= 0.75 or header_lc:match("date") then
+  if share(values, "^%d%d%d%d%-%d%d%-%d%d$") >= 0.75
+    or share(values, "^%d?%d[/%-]%d?%d[/%-]%d%d%d%d$") >= 0.75
+    or header_lc:match("date") then
     return { type = "date", confidence = 0.9 }
   end
-  if header_lc:match("duration") or share(values, "^%d+%s+[Dd]ays?$") + share(values, "^%d+%s+[Ww]eeks?$") + share(values, "^%d+%s+[Mm]onths?$") >= 0.65 then
+  if header_lc:match("duration") or header_lc:match("durée")
+    or share(values, "^%d+%s+[Dd]ays?$") + share(values, "^%d+%s+[Ww]eeks?$") + share(values, "^%d+%s+[Mm]onths?$") + share(values, "^%d+%s*h%s*%d*%s*$") >= 0.65 then
     return { type = "duration", confidence = 0.85 }
   end
-  if share(values, "^%-?[%d%s,%.]+%s?[$€£]$") >= 0.65 or header_lc:match("prime") or header_lc:match("amount") then
+  if share(values, "^[$€£]%s*%-?[%d%s,%.]+$") >= 0.65
+    or share(values, "^%-?[%d%s,%.]+%s?[$€£]$") >= 0.65
+    or header_lc:match("prime") or header_lc:match("amount") or header_lc:match("montant") then
     return { type = "currency", confidence = 0.85 }
   end
   if share(values, "^%-?%d+[,.]?%d*%s?%%$") >= 0.65 or header_lc:match("ratio") or header_lc:match("rate") then
@@ -51,7 +56,12 @@ function M.infer(header, values)
 
   local numeric = 0
   for _, value in ipairs(values) do
-    local normalized = metrics.normalize_number_text(value):gsub("[$€£%%]", ""):gsub(",", ".")
+    local normalized = metrics.normalize_number_text(value):gsub("[$€£%%]", ""):gsub("%s", "")
+    if normalized:match(",") and normalized:match("%.") then
+      normalized = normalized:gsub("%.", ""):gsub(",", ".")
+    else
+      normalized = normalized:gsub(",", ".")
+    end
     if tonumber(normalized) ~= nil then
       numeric = numeric + 1
     end

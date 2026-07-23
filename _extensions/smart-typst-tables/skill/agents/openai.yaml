@@ -1,0 +1,4 @@
+interface:
+  display_name: "Use Smart Typst Tables"
+  short_description: "Author and style Quarto smart tables"
+  default_prompt: "Use $use-smart-typst-tables to configure and style my Quarto tables."

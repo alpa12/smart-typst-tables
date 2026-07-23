@@ -38,10 +38,30 @@ local function target_format()
   if is_typst() then
     return "typst"
   end
+  if quarto and quarto.doc and quarto.doc.is_format and quarto.doc.is_format("revealjs") then
+    return "revealjs"
+  end
+  if FORMAT == "revealjs" then
+    return "revealjs"
+  end
   if is_html() then
     return "html"
   end
   return nil
+end
+
+local function diagnostic_block(tbl, reason, target)
+  if target == "typst" or not (state.options and state.options.diagnostics) then
+    return nil
+  end
+  tbl.attr = tbl.attr or pandoc.Attr()
+  tbl.attr.attributes = tbl.attr.attributes or {}
+  tbl.attr.attributes["data-smart-tables-diagnosed"] = "true"
+  local note = pandoc.Div(
+    { pandoc.Para({ pandoc.Str("Smart table unchanged: " .. reason) }) },
+    pandoc.Attr("", { "smart-table-diagnostic" }, {})
+  )
+  return pandoc.Div({ tbl, note }, pandoc.Attr("", { "smart-table-diagnostic-wrap" }, {}))
 end
 
 local function include_typst_helpers()
@@ -122,9 +142,19 @@ local function disable_table(tbl)
   tbl.attr.attributes["smart-tables"] = "false"
 end
 
+-- A Quarto table with a caption/reference is commonly represented as a Div
+-- containing both the Table and one or more caption blocks.  Keep the Div's
+-- identifier for Quarto, but pass its styling options to the contained table.
+local function attr_without_identifier(attr)
+  if not attr then
+    return pandoc.Attr()
+  end
+  return pandoc.Attr("", copy_list(attr.classes), copy_attributes(attr.attributes))
+end
+
 local function is_processed(tbl)
   local attrs = tbl.attr and tbl.attr.attributes or {}
-  return attrs["data-smart-tables-processed"] == "true"
+  return attrs["data-smart-tables-processed"] == "true" or attrs["data-smart-tables-diagnosed"] == "true"
 end
 
 local function mark_processed(tbl)
@@ -143,31 +173,37 @@ local function render_table(tbl, attr)
     return nil
   end
 
-  local options = state.options or config.defaults()
+  local options = config.for_target(state.options or config.defaults(), target)
   local model = table_ast.from_pandoc_table(tbl)
   if attr then
     model.attr = merge_attrs(model.attr, attr)
-    if target == "html" then
+    if target ~= "typst" then
       tbl.attr = model.attr
     end
   end
+  local source_attrs = (model.attr and model.attr.attributes) or {}
+  if source_attrs["data-smart-tables-raw"] == "true" then
+    diagnostics.debug(options, "table skipped: explicitly marked as raw HTML")
+    return nil
+  end
   local table_options = config.for_table(options, model.attr)
+  table_options.output_target = target
 
   if not table_options.enabled then
     diagnostics.debug(options, "table skipped: disabled by configuration")
     return nil
   end
 
-  local eligible, reason = table_ast.is_eligible(model, table_options)
+  local eligible, reason = table_ast.is_eligible(model, table_options, target == "typst" and "typst" or "html")
   if not eligible then
     diagnostics.debug(options, "table skipped: " .. reason)
-    return nil
+    return diagnostic_block(tbl, reason, target)
   end
 
   local plan, plan_reason = layout_engine.plan(model, table_options)
   if not plan then
     diagnostics.debug(options, "table skipped: " .. plan_reason)
-    return nil
+    return diagnostic_block(tbl, plan_reason, target)
   end
 
   if target == "typst" then
@@ -183,23 +219,42 @@ local function render_table(tbl, attr)
 
   mark_processed(tbl)
   include_html_helpers()
-  return html_transformer.render(tbl, model, plan, table_options)
+  return html_transformer.render(tbl, model, plan, table_options, target)
 end
 
 local function div_filter(div)
   if not target_format() or not has_table_options(div.attr) then
     return nil
   end
-  if #div.content ~= 1 or div.content[1].t ~= "Table" then
+  local table_index = nil
+  for index, block in ipairs(div.content or {}) do
+    if block.t == "Table" then
+      if table_index then
+        -- Applying one set of table-specific options to several tables would
+        -- be ambiguous; leave this container to the ordinary table visitor.
+        return nil
+      end
+      table_index = index
+    end
+  end
+  if not table_index then
     return nil
   end
 
-  local rendered = render_table(div.content[1], div.attr)
+  local is_table_only = #div.content == 1
+  local rendered = render_table(
+    div.content[table_index],
+    is_table_only and div.attr or attr_without_identifier(div.attr)
+  )
   if rendered then
+    if not is_table_only then
+      div.content[table_index] = rendered
+      return div
+    end
     return rendered
   end
 
-  disable_table(div.content[1])
+  disable_table(div.content[table_index])
   return div
 end
 

@@ -11,6 +11,11 @@ smart-tables:
   table-width: full
   align: center
   stripe: true
+  revealjs:
+    max-width: 100%
+    max-height: 70vh
+    overflow: auto
+    font-size: auto
 ---
 
 ## Reveal Table
