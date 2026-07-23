@@ -71,6 +71,17 @@ smart-tables:
     font-size: 0.84em
 ```
 
+With `font-size: auto` (the default), Revealjs uses a compact `0.55em` table
+scale because Reveal's document font is normally 40px. This target-specific
+geometry applies after the visual profile but leaves its colours and rules
+intact. Set `font-size` explicitly to override its presentation scale. Natural
+tables fit compact fields to their protected content and reserve a useful,
+capped reading measure for prose. On Revealjs, explicit width ratios guide this
+balance but do not force blank space into short labels; standard HTML retains
+the source ratio. A planned table can become horizontally scrollable on a
+narrow slide; this is intentional and prevents protected header lines from
+overlapping cells.
+
 Use `.reveal .table-brand ...` for reveal-specific color or typography rules.
 Do not globally set `.smart-table { width: 100% }`, change
 `.smart-table-wrap` to `display: block`, or remove `.smart-table-scroll`.

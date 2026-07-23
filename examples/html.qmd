@@ -1,6 +1,6 @@
 ---
 title: "Smart Tables HTML"
-format: html
+format: revealjs
 filters:
   - quarto
   - ../_extensions/smart-typst-tables/smart-typst-tables.lua
@@ -116,8 +116,8 @@ List-table simple, avec alignements déclarés.
 - - Équipe
   - []{colspan=2}Période courante
 - - Groupe
-  - Résultats
-  - Résultats
+  - Taux
+  - Montant
 - - Données
   - []{rowspan=2}91,0 %
   - 1 234,50 €

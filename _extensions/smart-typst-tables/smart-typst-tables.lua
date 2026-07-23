@@ -86,7 +86,7 @@ end
 
 local function has_table_options(attr)
   local attrs = (attr and attr.attributes) or {}
-  if attrs["smart-tables"] ~= nil then
+  if attrs["smart-tables"] ~= nil or attrs["tbl-colwidths"] ~= nil or attrs.widths ~= nil then
     return true
   end
   for key, _ in pairs(attrs) do

@@ -103,10 +103,12 @@ local function cell_classes(plan, col, is_header)
   local inferred = plan.types and plan.types[col]
   local kind = inferred and inferred.type or "mixed"
   table.insert(classes, "smart-table-type-" .. css_ident(kind, "mixed"))
+  local header_text = table.concat((plan.header_lines and plan.header_lines[col]) or {}, " "):lower()
   -- Headers have already received deliberate line breaks from header_wrap.
   -- Do not turn those breaks into a minimum-width constraint: a narrow
   -- numeric column may still need its title to wrap in a small container.
-  if not is_header and (kind == "numeric" or kind == "currency" or kind == "percentage" or kind == "date" or kind == "duration") then
+  if not is_header and (kind == "numeric" or kind == "currency" or kind == "percentage" or kind == "date" or kind == "duration"
+      or (kind == "identifier" and (header_text:match("code") or header_text:match("^id$") or header_text:match("identifiant")))) then
     table.insert(classes, "smart-table-nowrap")
   end
 
@@ -144,14 +146,30 @@ local function is_simple_text_blocks(blocks)
   return true
 end
 
-local function style_cell(cell, classes, scope)
+local function style_cell(cell, classes, scope, width)
   cell.attr = add_classes(cell.attr or pandoc.Attr(), classes)
   if scope and not (cell.attr.attributes or {}).scope then
     cell.attr = set_attribute(cell.attr, "scope", scope)
   end
+  if width then
+    cell.attr = append_style(cell.attr, "width:" .. width .. ";max-width:" .. width .. ";")
+  end
 end
 
-local function transform_header(tbl, model, plan, options)
+local reveal_track_width
+
+local function has_explicit_source_widths(model)
+  -- Quarto passes `tbl-colwidths` from a containing caption Div after the
+  -- model is built, so inspect model.attr rather than only the original table
+  -- features.  Do not use non-zero Pandoc colspecs here: the Markdown reader
+  -- creates those automatically for ordinary pipe tables.
+  local attrs = (model.attr and model.attr.attributes) or {}
+  return model.features.has_explicit_widths
+    or attrs["tbl-colwidths"] ~= nil
+    or attrs.widths ~= nil
+end
+
+local function transform_header(tbl, model, plan, options, target)
   if tbl.head == nil or tbl.head.rows == nil then
     return
   end
@@ -162,7 +180,12 @@ local function transform_header(tbl, model, plan, options)
       local logical = rows[row_index] and rows[row_index][cell_index]
       local col = logical and logical.column or cell_index
       local classes = cell_classes(plan, col, true)
-      style_cell(cell, classes, (cell.col_span or 1) > 1 and "colgroup" or "col")
+      local width = nil
+      if target == "revealjs" and plan.table_width == "natural"
+        and logical and (cell.col_span or 1) == 1 then
+        width = reveal_track_width(model, plan, col)
+      end
+      style_cell(cell, classes, (cell.col_span or 1) > 1 and "colgroup" or "col", width)
       if logical and (cell.col_span or 1) == 1 and is_simple_text_blocks(cell.contents) then
         -- Reuse the fitted, balanced lines selected by the shared layout
         -- engine (and therefore by Typst) for the primary header row.
@@ -181,7 +204,7 @@ local function transform_header(tbl, model, plan, options)
   end
 end
 
-local function transform_body(tbl, model, plan)
+local function transform_body(tbl, model, plan, target)
   local model_offset = 0
   for _, body in ipairs(tbl.bodies or {}) do
     local model_rows = {}
@@ -193,7 +216,12 @@ local function transform_body(tbl, model, plan)
       for cell_index, cell in ipairs(row.cells) do
         local logical = rows[row_index] and rows[row_index][cell_index]
         local col = logical and logical.column or cell_index
-        style_cell(cell, cell_classes(plan, col, false), nil)
+        local width = nil
+        if target == "revealjs" and plan.table_width == "natural"
+          and logical and (cell.col_span or 1) == 1 then
+          width = reveal_track_width(model, plan, col)
+        end
+        style_cell(cell, cell_classes(plan, col, false), nil, width)
       end
     end
     model_offset = model_offset + #(body.body or {})
@@ -242,7 +270,7 @@ end
 -- allocation accordingly; this changes proportions, not author-supplied
 -- widths.  Keeping this policy here also gives HTML and RevealJS the same
 -- behaviour.
-local function html_column_weight(model, plan, col)
+local function html_column_weight(model, plan, col, protect_minimums)
   local width = html_column_natural_width(model, plan, col)
   local kind = plan.types and plan.types[col] and plan.types[col].type or "mixed"
   local bias = {
@@ -251,24 +279,107 @@ local function html_column_weight(model, plan, col)
     identifier = 0.78, categorical = 0.8, code = 0.88,
     mixed = 1.08, free_text = 1.35,
   }
-  return width * (bias[kind] or 1)
+  if not protect_minimums then
+    return width * (bias[kind] or 1)
+  end
+
+  -- Slides have far less horizontal room than pages.  Fit every compact
+  -- track to its actual longest protected token plus a small breathing room,
+  -- rather than to the broad HTML type defaults.  This still protects a
+  -- deliberate header line and all nowrap values, but does not reserve page
+  -- width for short identifiers such as a region, code, or status.
+  -- Cell padding already provides 0.64em of horizontal breathing room in the
+  -- Reveal profile. Add only a small extra allowance here; adding a full em
+  -- to every track compounds into a large blank gap on dense tables.
+  local margin = 0.4
+  local header_minimum = max_line_width(plan.header_lines and plan.header_lines[col]) + margin
+  local token_minimum, visual = 0, {}
+  for _, value in ipairs(table_ast.column_values(model, col)) do
+    token_minimum = math.max(token_minimum, metrics.unbreakable_width(value) + margin)
+    table.insert(visual, metrics.visual_width(value))
+  end
+  local compact = math.max(header_minimum, token_minimum)
+
+  if kind == "free_text" then
+    -- Narrative cells may wrap.  Give them a useful reading measure, but do
+    -- not let two long sentences consume the whole slide.
+    local prose = math.min(10, metrics.median(visual) * 0.32 + margin)
+    return math.max(compact, prose)
+  end
+
+  return compact
 end
 
-local function html_natural_width(model, plan)
+reveal_track_width = function(model, plan, col)
+  -- text_metrics is deliberately conservative and does not know the active
+  -- Reveal font. Source Sans renders these labels about 16% narrower, so use
+  -- that calibrated track width. CSS nowrap still supplies the hard browser
+  -- minimum for dates, amounts, and codes.
+  local kind = plan.types and plan.types[col] and plan.types[col].type or "mixed"
+  if kind == "free_text" then
+    local visual = {}
+    for _, value in ipairs(table_ast.column_values(model, col)) do
+      table.insert(visual, metrics.visual_width(value))
+    end
+    -- Prose is where a slide earns its horizontal space.  Aim for a readable
+    -- two-to-three-line measure for ordinary sentences, while retaining a
+    -- ceiling so a single narrative column cannot force needless scrolling.
+    local prose = math.max(12, math.min(16, metrics.median(visual) * 0.55 + 0.6))
+    return string.format("%.1fem", prose):gsub("%.0em", "em")
+  end
+
+  local width = html_column_weight(model, plan, col, true) * 0.84
+  return string.format("%.1fem", width):gsub("%.0em", "em")
+end
+
+local function html_natural_width(model, plan, target)
   local total = 0
   for col = 1, #(plan.columns or {}) do
-    total = total + html_column_weight(model, plan, col)
+    total = total + html_column_weight(model, plan, col, target == "revealjs")
   end
-  total = math.max(12, math.min(56, total + 1.2))
+  -- A fixed cap is useful in a document page, where the browser can still
+  -- reflow prose. RevealJS instead needs the sum of its protected minima so
+  -- that its deliberate two-line headers never overlap; the scroll wrapper
+  -- owns any resulting overflow.
+  if target == "revealjs" then
+    total = math.max(12, total + 1.2)
+  else
+    total = math.max(12, math.min(56, total + 1.2))
+  end
   return string.format("%.1fem", total):gsub("%.0em", "em")
 end
 
-local function apply_colspecs(tbl, model, plan)
+local function explicit_colwidths(model, n_cols)
+  local attrs = (model.attr and model.attr.attributes) or {}
+  local raw = attrs["tbl-colwidths"] or attrs.widths
+  if type(raw) ~= "string" then
+    return nil
+  end
+
+  local weights, total = {}, 0
+  for value in raw:gmatch("[-+]?%d*%.?%d+") do
+    local width = tonumber(value)
+    if not width or width <= 0 then
+      return nil
+    end
+    table.insert(weights, width)
+    total = total + width
+  end
+  if #weights ~= n_cols or total == 0 then
+    return nil
+  end
+  return weights, total
+end
+
+local function apply_colspecs(tbl, model, plan, target)
   local total = 0
   local weights = {}
-  if not model.features.has_explicit_widths then
+  local source_widths = has_explicit_source_widths(model)
+  local explicit_weights, explicit_total = explicit_colwidths(model, #(tbl.colspecs or {}))
+  local content_aware_reveal = target == "revealjs" and plan.table_width == "natural"
+  if not source_widths and not content_aware_reveal then
     for col = 1, #(tbl.colspecs or {}) do
-      weights[col] = html_column_weight(model, plan, col)
+      weights[col] = html_column_weight(model, plan, col, target == "revealjs")
       total = total + weights[col]
     end
   end
@@ -276,7 +387,16 @@ local function apply_colspecs(tbl, model, plan)
     if plan.col_align and plan.col_align[col] then
       colspec[1] = pandoc_align(plan.col_align[col])
     end
-    if total > 0 then
+    if content_aware_reveal then
+      -- Do not serialize percentage <col> widths.  They are preferred widths
+      -- even under table-layout:auto and keep empty space beside compact
+      -- values; RevealJS should let the browser measure each real track.
+      colspec[2] = 0
+    elseif explicit_weights then
+      -- Keep the authored ratio even when Quarto has not already converted
+      -- tbl-colwidths to Pandoc colspecs.
+      colspec[2] = explicit_weights[col] / explicit_total
+    elseif total > 0 then
       colspec[2] = weights[col] / total
     end
   end
@@ -291,27 +411,43 @@ local function profile_attr(plan)
 end
 
 function M.render(tbl, model, plan, options, target)
-  transform_header(tbl, model, plan, options)
-  transform_body(tbl, model, plan)
-  apply_colspecs(tbl, model, plan)
+  transform_header(tbl, model, plan, options, target)
+  transform_body(tbl, model, plan, target)
+  apply_colspecs(tbl, model, plan, target)
 
   tbl.attr = tbl.attr or pandoc.Attr()
   add_class(tbl.attr, "smart-table")
   add_class(tbl.attr, "smart-table-profile-" .. css_ident(plan.profile, "academic"))
   add_class(tbl.attr, "smart-table-width-" .. css_ident(plan.table_width, "natural"))
   add_class(tbl.attr, "smart-table-align-" .. css_ident(plan.align, "center"))
+  -- Keep the browser-width policy separate from the shared layout plan.  In
+  -- RevealJS, even a `full` table needs this content minimum: otherwise its
+  -- percentage tracks can become narrower than deliberate, non-wrapping
+  -- header lines and the text paints over neighbouring cells.
+  local planned_width = nil
   local natural_width = nil
-  if not model.features.has_explicit_widths then
+  local source_widths = has_explicit_source_widths(model)
+  if not source_widths then
     add_class(tbl.attr, "smart-table-layout-planned")
-    if plan.table_width == "natural" then
-      natural_width = html_natural_width(model, plan)
+    planned_width = html_natural_width(model, plan, target)
+  if plan.table_width == "natural" then
+      natural_width = planned_width
       append_style(tbl.attr, "--smart-table-natural-width:" .. natural_width .. ";")
-      -- Quarto themes can load after this extension and force table width to
-      -- 100%. An inline important declaration preserves the planned intrinsic
-      -- width while the wrapper remains responsible for overflow.
-      append_style(tbl.attr, "width:" .. natural_width .. " !important;")
-      append_style(tbl.attr, "max-width:none !important;")
-      append_style(tbl.attr, "table-layout:fixed !important;")
+      if target == "revealjs" then
+        -- Percent colspecs with a fixed layout allocate empty width to every
+        -- track. Let browsers size a slide table from its actual compact
+        -- content instead; free-text cells are capped in the target CSS.
+        append_style(tbl.attr, "width:auto !important;")
+        append_style(tbl.attr, "max-width:none !important;")
+        append_style(tbl.attr, "table-layout:auto !important;")
+      else
+        -- Quarto themes can load after this extension and force table width to
+        -- 100%. An inline important declaration preserves the planned intrinsic
+        -- width while the wrapper remains responsible for overflow.
+        append_style(tbl.attr, "width:" .. natural_width .. " !important;")
+        append_style(tbl.attr, "max-width:none !important;")
+        append_style(tbl.attr, "table-layout:fixed !important;")
+      end
     end
   end
   if plan.stripe then
@@ -330,7 +466,7 @@ function M.render(tbl, model, plan, options, target)
   end
 
   local wrapper_attr = profile_attr(plan)
-  if natural_width then
+  if natural_width and target ~= "revealjs" then
     -- The inner wrapper constrains themes that force table { width: 100% }.
     -- The outer scroll container can still occupy the page width.
     append_style(wrapper_attr, "width:" .. natural_width .. " !important;")
@@ -343,14 +479,26 @@ function M.render(tbl, model, plan, options, target)
   set_attribute(scroll_attr, "data-smart-tables", "true")
 
   if target == "revealjs" then
+    -- Reveal's 40px base type makes the HTML-oriented profile sizes far too
+    -- large.  Mark the table itself so the target stylesheet can apply its
+    -- presentation geometry after a visual profile, while preserving the
+    -- latter's colours and rules.
+    add_class(tbl.attr, "smart-table-target-reveal")
+    add_class(wrapper_attr, "smart-table-target-reveal")
     add_class(scroll_attr, "smart-table-reveal")
     local reveal = options.revealjs or {}
     append_style(scroll_attr, "--smart-table-reveal-max-width:" .. (reveal.max_width or "100%") .. ";")
     append_style(scroll_attr, "--smart-table-reveal-max-height:" .. (reveal.max_height or "70vh") .. ";")
     append_style(scroll_attr, "--smart-table-reveal-overflow:" .. (reveal.overflow or "auto") .. ";")
+    if planned_width then
+      append_style(tbl.attr, "--smart-table-reveal-min-width:" .. planned_width .. ";")
+    end
     local reveal_size = css_size(reveal.font_size)
     if reveal_size then
-      append_style(wrapper_attr, "--smart-table-font-size:" .. reveal_size .. ";")
+      -- Widths are expressed in em on the wrapper as well as on the table.
+      -- Put an explicit presentation scale on that wrapper so the planned
+      -- width and its table typography stay in the same coordinate system.
+      append_style(wrapper_attr, "font-size:" .. reveal_size .. ";")
     end
   end
 

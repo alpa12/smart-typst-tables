@@ -10,6 +10,7 @@ smart-tables:
   revealjs:
     max-height: 65vh
     overflow: auto
+    font-size: 0.7em
 ---
 
 ## Auto-stretch remains controlled

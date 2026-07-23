@@ -21,7 +21,7 @@
   --smart-table-inset-x: 0.55em;
   --smart-table-inset-y: 0.38em;
   --smart-table-header-fill: #f2f2f2;
-  --smart-table-stripe-fill: #fafafa;
+  --smart-table-stripe-fill: #edf1f5;
   --smart-table-header-stroke: #222;
   --smart-table-row-stroke: #e1e1e1;
   --smart-table-header-stroke-width: 1px;
@@ -117,8 +117,11 @@
   border-top: var(--smart-table-row-stroke-width) solid var(--smart-table-row-stroke);
 }
 
-.smart-table.smart-table-stripe tbody tr:nth-child(even) td {
-  background: var(--smart-table-stripe-fill);
+.smart-table.smart-table-stripe tbody tr:nth-child(even) > th,
+.smart-table.smart-table-stripe tbody tr:nth-child(even) > td {
+  /* Use background-color with priority over the Reveal/Quarto base table
+     rules.  The profile variable remains the public customization hook. */
+  background-color: var(--smart-table-stripe-fill) !important;
 }
 
 .smart-table-cell {
@@ -163,7 +166,7 @@
   --smart-table-inset-x: 0.55em;
   --smart-table-inset-y: 0.38em;
   --smart-table-header-fill: #f2f2f2;
-  --smart-table-stripe-fill: #fafafa;
+  --smart-table-stripe-fill: #edf1f5;
   --smart-table-header-stroke: #222;
   --smart-table-row-stroke: #e1e1e1;
   --smart-table-header-stroke-width: 1px;
@@ -176,7 +179,7 @@
   --smart-table-inset-x: 0.34em;
   --smart-table-inset-y: 0.2em;
   --smart-table-header-fill: #e8e8e8;
-  --smart-table-stripe-fill: #fafafa;
+  --smart-table-stripe-fill: #eef2f5;
   --smart-table-header-stroke: #222;
   --smart-table-row-stroke: #dddddd;
   --smart-table-header-stroke-width: 1px;
@@ -220,6 +223,43 @@
   align-items: flex-start;
 }
 
+.reveal .smart-table-wrap.smart-table-target-reveal {
+  /* Reveal's default type is 40px.  HTML profile sizes such as 0.92em would
+     therefore make ordinary six-column tables wider than a slide. Scale the
+     wrapper itself because planned widths are also expressed in its ems. An
+     inline revealjs.font-size setting still wins. */
+  font-size: 0.55em;
+}
+
+.reveal .smart-table.smart-table-target-reveal {
+  /* The wrapper already establishes Reveal's compact scale. Keep table type
+     at one wrapper em so width, text, padding, and min-width agree. */
+  --smart-table-font-size: 1em;
+  --smart-table-leading: 1.2;
+  --smart-table-inset-x: 0.32em;
+  --smart-table-inset-y: 0.2em;
+}
+
+/* Natural-width RevealJS tables use the browser's content-aware algorithm.
+   The HTML backend keeps its fixed proportional layout.  Prose gets a useful
+   reading measure; compact columns retain only their content-sized tracks. */
+.reveal .smart-table.smart-table-target-reveal.smart-table-width-natural {
+  table-layout: auto !important;
+}
+
+.reveal .smart-table.smart-table-target-reveal .smart-table-type-free_text {
+  width: 16em;
+  max-width: 16em;
+  white-space: normal;
+}
+
+/* A full-width table uses percentage tracks.  Its planned content minimum
+   prevents protected header lines from painting into adjacent columns; the
+   outer smart-table-scroll container owns the resulting overflow. */
+.reveal .smart-table.smart-table-target-reveal.smart-table-width-full.smart-table-layout-planned {
+  min-width: var(--smart-table-reveal-min-width);
+}
+
 .reveal .smart-table-profile-reveal {
   --smart-table-font-size: 0.88em;
   --smart-table-leading: 1.32;
@@ -248,6 +288,17 @@
 .reveal .smart-table th,
 .reveal .smart-table td {
   padding: var(--smart-table-inset-y) var(--smart-table-inset-x);
+}
+
+/* A row-spanning value belongs to several visual rows. Centering it in a
+   slide makes the intentionally interrupted row rule legible as a rowspan,
+   rather than as a missing cell. */
+.reveal .smart-table tbody td[rowspan] {
+  vertical-align: middle;
+  /* Reveal's base table rule gives the originating row a bottom border. A
+     rowspan has no row boundary at that position, so suppress the orphaned
+     fragment rather than drawing a rule through a merged native cell. */
+  border-bottom: 0 !important;
 }
 
 .smart-table-diagnostic {

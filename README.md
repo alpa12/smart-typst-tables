@@ -66,7 +66,8 @@ adds conservative classes and responsive wrappers. Rich cell content, merged
 cells, captions, identifiers, and source widths remain available to the browser.
 For ordinary tables, inferred column weights reserve more width for descriptive
 text and less for numeric values; declared `tbl-colwidths` and list-table
-`widths` remain authoritative.
+`widths` remain authoritative in standard HTML. Natural Revealjs tables use
+them as presentation hints so short fields do not consume unused slide width.
 
 ```yaml
 format: revealjs
@@ -119,8 +120,19 @@ smart-tables:
 ```
 
 The wrapper uses `max-width`, `max-height`, and `overflow`; `font-size`
-overrides the profile only for Revealjs tables. Tables in `columns` receive a
-smaller height cap, while scrollable slides keep their native scrolling.
+overrides the presentation scale only for Revealjs tables. With `font-size: auto`, the
+extension uses a presentation-safe `0.55em` table scale (Reveal's base type is
+usually 40px), while retaining the selected profile's colours and rules.
+Tables in `columns` receive a smaller height cap, while scrollable slides keep
+their native scrolling. For tables without author widths, Revealjs also keeps
+a planned content minimum so deliberate header lines trigger the table's
+horizontal scroller instead of overlapping adjacent columns.
+
+For natural-width tables, Revealjs fits compact columns to their protected
+content and gives narrative columns a readable measure (roughly two to three
+lines for an ordinary sentence). An author-specified `tbl-colwidths` ratio is
+preserved in standard HTML; on a Revealjs slide it remains a hint rather than
+forcing unused space into short labels or amounts.
 
 Additional document-level options are available for advanced cases:
 
@@ -275,8 +287,9 @@ Do not globally force `.smart-table` to `width: 100%`, change
 `.smart-table-wrap` to `display: block`, or remove the nested
 `.smart-table-scroll` container: those rules undo natural-width sizing or hide
 wide columns. Use `smart-tables-width="full"` when a particular table should
-occupy the available width. Respect explicit source widths (`tbl-colwidths` or
-list-table `widths`) unless the author has chosen `explicit-widths: optimize`.
+occupy the available width. Standard HTML respects explicit source widths
+(`tbl-colwidths` or list-table `widths`); natural Revealjs rebalances them to
+keep compact slide fields close to their content.
 
 Raw HTML tables and `knitr::kable(format = "html")` are deliberately not
 transformed. Style those with their own classes; they do not receive
@@ -328,8 +341,9 @@ quarto render examples/revealjs.qmd
 
 - Typst keeps a conservative fallback for complex cell blocks, math, raw HTML,
   and spans. HTML and Revealjs preserve those constructs natively.
-- Explicit source widths are treated as user intent and are not overridden by
-  default.
+- Explicit source widths are preserved in standard HTML. Natural Revealjs uses
+  them as layout hints, then reallocates excess width from compact fields to
+  prose for slide readability.
 - The layout engine is heuristic, not a font measurement engine.
 - HTML/revealjs support preserves Quarto's native table markup instead of
   generating raw HTML. This protects captions and cross-references, but means

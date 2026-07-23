@@ -42,3 +42,12 @@ See @tbl-reveal-summary.
 | Standard deviation | 7.8 | Minimal decoration. |
 | Observations | 126 | Natural width. |
 :::
+
+## Long headers remain readable
+
+::: {smart-tables-width="full" smart-tables-header-lines="2"}
+| Workstream | Start date | Review date | Planned hours | On-time rate | Follow-up notes |
+|---|---|---|---:|---:|---|
+| Discovery | 2026-01-06 | 2026-01-20 | 80 | 91.0% | Stable delivery with a few integration delays. |
+| Prototype | 2026-01-21 | 2026-02-18 | 160 | 88.5% | Batch validation adds some review time. |
+:::

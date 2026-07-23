@@ -37,6 +37,54 @@ smart-tables:
 
 :::
 
+## Long headers use a planned minimum
+
+::: {#tbl-reveal-wide smart-tables-width="full" smart-tables-header-lines="2"}
+
+| Workstream | Start date | Review date | Planned hours | On-time rate | Follow-up notes |
+|---|---|---|---:|---:|---|
+| Discovery | 2026-01-06 | 2026-01-20 | 80 | 91,0 % | Stable delivery with a few integration delays. |
+| Prototype | 2026-01-21 | 2026-02-18 | 160 | 88,5 % | Batch validation adds some review time. |
+
+:::
+
+## Explicit widths remain author-controlled
+
+::: {#tbl-reveal-explicit tbl-colwidths="[20,25,55]"}
+
+| Team | Budget | Detailed observation |
+|---|---:|---|
+| Design | 9 750 € | The authored width must not gain an inferred Reveal minimum. |
+
+:::
+
+## Native merged cells remain legible
+
+::: {.list-table #tbl-reveal-spans header-rows=2 header-cols=1 aligns="l,c,r"}
+
+- - Team
+  - []{colspan=2}Current period
+- - Group
+  - Rate
+  - Amount
+- - Data
+  - []{rowspan=2}91,0 %
+  - 1 234,50 €
+- - Design
+  - [View detail](https://example.com)
+
+:::
+
+## Dense data remains compact
+
+::: {#tbl-reveal-dense}
+
+| Region | Segment | Code | Date | Duration | Budget | Rate | Status | Owner | Detail |
+|---|---|---|---|---|---:|---:|---|---|---|
+| East | Student | E-102 | 12/06/2026 | 1 h 30 | 12 500 € | 91,0 % | Active | Anaïs | A long note may wrap, while compact fields remain close to their content. |
+
+:::
+
 ## Scrollable {.scrollable}
 
 ::: {.callout-note}
